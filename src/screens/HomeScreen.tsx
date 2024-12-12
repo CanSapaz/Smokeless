@@ -1,10 +1,81 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { storage } from '../services/storage';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types/navigation';
+import { useTheme } from '../context/ThemeContext';
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+// Motivasyon sözleri
+const motivationalQuotes = [
+  "Her yeni gün, daha sağlıklı bir yaşam için yeni bir fırsat!",
+  "Küçük adımlar, büyük değişimlere yol açar.",
+  "Kendine olan inancını asla kaybetme!",
+  "Bugün zorlu olabilir, ama yarın daha güçlü olacaksın.",
+  "Her 'Hayır' dediğinde, özgürlüğüne 'Evet' demiş oluyorsun.",
+  "Sağlıklı bir gelecek için doğru yoldasın!",
+  "Başarı, her gün alınan küçük kararların toplamıdır.",
+  "Sen seçimlerinden daha güçlüsün!",
+];
+
+// Günlük görevler
+const dailyTasks = [
+  {
+    id: 1,
+    title: "Su İç",
+    description: "8 bardak su içmeyi hedefle",
+    icon: "water-outline",
+  },
+  {
+    id: 2,
+    title: "Nefes Egzersizi",
+    description: "3 dakika derin nefes al",
+    icon: "leaf-outline",
+  },
+  {
+    id: 3,
+    title: "Kısa Yürüyüş",
+    description: "10 dakika yürüyüş yap",
+    icon: "walk-outline",
+  },
+  {
+    id: 4,
+    title: "Meyve Ye",
+    description: "1 porsiyon meyve ye",
+    icon: "nutrition-outline",
+  },
+];
+
+// Başa çıkma teknikleri
+const copingTechniques = [
+  {
+    title: "4-7-8 Nefes Tekniği",
+    description: "4 saniye nefes al, 7 saniye tut, 8 saniye ver",
+    icon: "fitness-outline",
+  },
+  {
+    title: "Su İç",
+    description: "Bir bardak su iç ve yavaşça içmeye odaklan",
+    icon: "water-outline",
+  },
+  {
+    title: "Yürüyüş Yap",
+    description: "Kısa bir yürüyüşe çık ve temiz hava al",
+    icon: "walk-outline",
+  },
+  {
+    title: "Dikkat Dağıt",
+    description: "Sevdiğin bir aktiviteye yönel",
+    icon: "game-controller-outline",
+  },
+];
 
 export const HomeScreen = () => {
   const [quitDate, setQuitDate] = useState<Date | null>(null);
+  const [dailyQuote, setDailyQuote] = useState("");
   const [profile, setProfile] = useState({
     cigarettesPerDay: 20,
     pricePerPack: 30,
@@ -16,11 +87,16 @@ export const HomeScreen = () => {
     cigarettesNotSmoked: 0,
     timeRegained: 0,
   });
+  const [mood, setMood] = useState<string | null>(null);
+  const [completedTasks, setCompletedTasks] = useState<number[]>([]);
 
+  const navigation = useNavigation<NavigationProp>();
+  const { theme } = useTheme();
   const MINUTES_PER_CIGARETTE = 10;
 
   useEffect(() => {
     loadData();
+    setRandomQuote();
   }, []);
 
   const loadData = async () => {
@@ -51,66 +127,182 @@ export const HomeScreen = () => {
     }
   }, [quitDate, profile]);
 
+  const setRandomQuote = () => {
+    const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
+    setDailyQuote(motivationalQuotes[randomIndex]);
+  };
+
   const handleStartQuitting = async () => {
     const date = new Date();
     setQuitDate(date);
     await storage.saveQuitDate(date);
   };
 
-  const Achievement = ({ icon, title, value, unit }: { icon: string, title: string, value: number, unit: string }) => (
-    <View style={styles.achievementCard}>
-      <Ionicons name={icon as any} size={32} color="#2C3E50" />
-      <Text style={styles.achievementTitle}>{title}</Text>
-      <Text style={styles.achievementValue}>{value.toFixed(1)} {unit}</Text>
+  const toggleTaskCompletion = (taskId: number) => {
+    setCompletedTasks(prev =>
+      prev.includes(taskId)
+        ? prev.filter(id => id !== taskId)
+        : [...prev, taskId]
+    );
+  };
+
+  const handleMoodSelect = (selectedMood: string) => {
+    setMood(selectedMood);
+    // Burada mood'u storage'a kaydedebiliriz
+  };
+
+  const StatCard = ({ icon, value, unit, decimal = true, title }: { 
+    icon: string, 
+    value: number, 
+    unit: string,
+    decimal?: boolean,
+    title: string
+  }) => (
+    <View style={[styles.statCard, {
+      backgroundColor: theme.card,
+      borderColor: theme.cardBorder,
+    }]}>
+      <View style={styles.statHeader}>
+        <Ionicons name={icon as any} size={24} color={theme.primary} />
+        <Text style={[styles.statTitle, { color: theme.textSecondary }]}>{title}</Text>
+      </View>
+      <View style={styles.statValueContainer}>
+        <Text style={[styles.statValue, { color: theme.text }]}>
+          {decimal ? value.toFixed(1) : Math.round(value)} {unit}
+        </Text>
+      </View>
     </View>
   );
 
-  return (
-    <ScrollView style={styles.container}>
-      {!quitDate ? (
+  const TaskCard = ({ task }: { task: typeof dailyTasks[0] }) => (
+    <TouchableOpacity
+      style={[styles.taskCard, {
+        backgroundColor: theme.card,
+        borderColor: theme.cardBorder,
+      }]}
+      onPress={() => toggleTaskCompletion(task.id)}
+    >
+      <View style={[styles.taskIconContainer, {
+        backgroundColor: completedTasks.includes(task.id) ? theme.primary + '20' : 'transparent'
+      }]}>
+        <Ionicons
+          name={task.icon as any}
+          size={24}
+          color={completedTasks.includes(task.id) ? theme.primary : theme.text}
+        />
+      </View>
+      <View style={styles.taskContent}>
+        <Text style={[styles.taskTitle, { color: theme.text }]}>{task.title}</Text>
+        <Text style={[styles.taskDescription, { color: theme.textSecondary }]}>
+          {task.description}
+        </Text>
+      </View>
+      {completedTasks.includes(task.id) && (
+        <Ionicons name="checkmark-circle" size={24} color={theme.primary} />
+      )}
+    </TouchableOpacity>
+  );
+
+  const CopingCard = ({ technique }: { technique: typeof copingTechniques[0] }) => (
+    <View style={[styles.copingCard, {
+      backgroundColor: theme.card,
+      borderColor: theme.cardBorder,
+    }]}>
+      <View style={[styles.copingIconContainer, { backgroundColor: theme.primary + '20' }]}>
+        <Ionicons name={technique.icon as any} size={24} color={theme.primary} />
+      </View>
+      <Text style={[styles.copingTitle, { color: theme.text }]}>{technique.title}</Text>
+      <Text style={[styles.copingDescription, { color: theme.textSecondary }]}>
+        {technique.description}
+      </Text>
+    </View>
+  );
+
+  if (!quitDate) {
+    return (
+      <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.welcomeContainer}>
-          <Text style={styles.title}>Sigarasız Hayata Hoş Geldiniz!</Text>
-          <Text style={styles.subtitle}>Yeni bir başlangıç için hazır mısınız?</Text>
-          <TouchableOpacity style={styles.startButton} onPress={handleStartQuitting}>
+          <Text style={[styles.title, { color: theme.text }]}>Sigarasız Hayata Hoş Geldiniz!</Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+            Yeni bir başlangıç için hazır mısınız?
+          </Text>
+          <TouchableOpacity
+            style={[styles.startButton, { backgroundColor: theme.primary }]}
+            onPress={handleStartQuitting}
+          >
             <Text style={styles.startButtonText}>Sigarayı Bırakmaya Başla</Text>
           </TouchableOpacity>
         </View>
-      ) : (
-        <View>
-          <View style={styles.header}>
-            <Text style={styles.title}>Başarılarınız</Text>
-            <Text style={styles.subtitle}>{stats.daysSince} gündür sigarasızsınız!</Text>
-          </View>
-          
-          <View style={styles.achievementsContainer}>
-            <Achievement 
-              icon="time-outline" 
-              title="Kazanılan Zaman" 
-              value={stats.timeRegained} 
-              unit="saat"
-            />
-            <Achievement 
-              icon="cash-outline" 
-              title="Biriken Para" 
-              value={stats.moneySaved} 
-              unit="TL"
-            />
-            <Achievement 
-              icon="medical-outline" 
-              title="İçilmeyen Sigara" 
-              value={stats.cigarettesNotSmoked} 
-              unit="adet"
-            />
-          </View>
+      </ScrollView>
+    );
+  }
 
-          <View style={styles.motivationCard}>
-            <Ionicons name="trophy" size={40} color="#FFD700" />
-            <Text style={styles.motivationText}>
-              Harika gidiyorsunuz! Her gün daha sağlıklı bir yaşama bir adım daha yakınsınız.
-            </Text>
-          </View>
+  return (
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
+      {/* Hoşgeldin ve İstatistikler */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Hoşgeldin!</Text>
+        <View style={styles.statsContainer}>
+          <StatCard
+            icon="cash-outline"
+            value={stats.moneySaved}
+            unit="₺"
+            decimal={true}
+            title="Birikim"
+          />
+          <StatCard
+            icon="medical-outline"
+            value={stats.cigarettesNotSmoked}
+            unit=""
+            decimal={false}
+            title="Sigara"
+          />
+          <StatCard
+            icon="calendar-outline"
+            value={stats.daysSince}
+            unit=""
+            decimal={false}
+            title="Gün"
+          />
         </View>
-      )}
+      </View>
+
+      {/* Motivasyon Kartı */}
+      <View style={[styles.quoteCard, {
+        backgroundColor: theme.card,
+        borderColor: theme.cardBorder,
+      }]}>
+        <View style={[styles.quoteIconContainer, { backgroundColor: theme.primary + '20' }]}>
+          <Ionicons name="sunny" size={32} color={theme.primary} />
+        </View>
+        <Text style={[styles.quoteText, { color: theme.text }]}>{dailyQuote}</Text>
+      </View>
+
+      {/* Günlük Görevler */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Günlük Görevler</Text>
+        <View style={styles.tasksContainer}>
+          {dailyTasks.map(task => (
+            <TaskCard key={task.id} task={task} />
+          ))}
+        </View>
+      </View>
+
+      {/* Başa Çıkma Teknikleri */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>
+          Sigara İsteği ile Başa Çıkma Teknikleri
+        </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.copingContainer}
+        >
+          {copingTechniques.map((technique, index) => (
+            <CopingCard key={index} technique={technique} />
+          ))}
+        </ScrollView>
+      </View>
     </ScrollView>
   );
 };
@@ -118,7 +310,6 @@ export const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   welcomeContainer: {
     flex: 1,
@@ -127,25 +318,18 @@ const styles = StyleSheet.create({
     padding: 20,
     marginTop: 40,
   },
-  header: {
-    padding: 20,
-    alignItems: 'center',
-  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2C3E50',
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: '#7F8C8D',
     textAlign: 'center',
     marginBottom: 20,
   },
   startButton: {
-    backgroundColor: '#2C3E50',
     paddingHorizontal: 30,
     paddingVertical: 15,
     borderRadius: 25,
@@ -156,42 +340,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  achievementsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around',
-    padding: 10,
+  section: {
+    padding: 20,
   },
-  achievementCard: {
-    backgroundColor: '#f5f6fa',
-    borderRadius: 15,
-    padding: 15,
-    alignItems: 'center',
-    width: '45%',
-    marginBottom: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  achievementTitle: {
-    fontSize: 14,
-    color: '#7F8C8D',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  achievementValue: {
-    fontSize: 16,
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#2C3E50',
-    marginTop: 4,
+    marginBottom: 15,
   },
-  motivationCard: {
-    backgroundColor: '#f5f6fa',
+  quoteCard: {
     margin: 20,
     padding: 20,
     borderRadius: 15,
+    borderWidth: 1,
     alignItems: 'center',
     elevation: 3,
     shadowColor: '#000',
@@ -199,11 +360,120 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
-  motivationText: {
+  quoteIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  quoteText: {
     fontSize: 16,
-    color: '#2C3E50',
     textAlign: 'center',
-    marginTop: 10,
     lineHeight: 24,
+    fontStyle: 'italic',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    gap: 10,
+  },
+  statCard: {
+    flex: 1,
+    height: 80,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    justifyContent: 'space-between',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  statHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statTitle: {
+    fontSize: 14,
+  },
+  statValueContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  tasksContainer: {
+    gap: 10,
+  },
+  taskCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderRadius: 12,
+    borderWidth: 1,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  taskIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  taskContent: {
+    flex: 1,
+  },
+  taskTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  taskDescription: {
+    fontSize: 14,
+  },
+  copingContainer: {
+    paddingHorizontal: 5,
+    gap: 15,
+  },
+  copingCard: {
+    width: 200,
+    padding: 15,
+    borderRadius: 12,
+    borderWidth: 1,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  copingIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  copingTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  copingDescription: {
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

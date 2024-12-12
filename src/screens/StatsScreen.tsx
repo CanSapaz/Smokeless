@@ -1,109 +1,192 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
-import { LineChart, BarChart } from 'react-native-chart-kit';
-import { format, subDays } from 'date-fns';
-import { tr } from 'date-fns/locale';
-import { storage, DailyLog } from '../services/storage';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { storage } from '../services/storage';
+import { useTheme } from '../context/ThemeContext';
+
+interface HealthBenefit {
+  title: string;
+  time: string;
+  description: string;
+  icon: string;
+}
+
+const healthBenefits: HealthBenefit[] = [
+  {
+    title: 'İlk Adım',
+    time: '20 dakika sonra',
+    description: 'Kan basıncı ve nabız normale döndü',
+    icon: 'heart-outline'
+  },
+  {
+    title: 'Temiz Kan',
+    time: '8 saat sonra',
+    description: 'Kandaki karbon monoksit seviyesi normale döndü',
+    icon: 'water-outline'
+  },
+  {
+    title: 'Güçlü Kalp',
+    time: '24 saat sonra',
+    description: 'Kalp krizi riski azalmaya başladı',
+    icon: 'fitness-outline'
+  },
+  {
+    title: 'Yeni Duygular',
+    time: '48 saat sonra',
+    description: 'Tat ve koku duyuları gelişmeye başladı',
+    icon: 'restaurant-outline'
+  },
+  {
+    title: 'Temiz Nefes',
+    time: '72 saat sonra',
+    description: 'Nefes alma kolaylaştı',
+    icon: 'leaf-outline'
+  },
+  {
+    title: 'Rahat Akciğer',
+    time: '1-9 ay sonra',
+    description: 'Öksürük ve nefes darlığı azaldı',
+    icon: 'medkit-outline'
+  },
+  {
+    title: 'Sağlıklı Yaşam',
+    time: '1 yıl sonra',
+    description: 'Kalp krizi riski yarıya indi',
+    icon: 'pulse-outline'
+  },
+  {
+    title: 'Yeni Ben',
+    time: '5 yıl sonra',
+    description: 'Akciğer kanseri riski yarıya indi',
+    icon: 'shield-checkmark-outline'
+  }
+];
 
 export const StatsScreen = () => {
-  const [dailyLogs, setDailyLogs] = useState<DailyLog[]>([]);
-  const screenWidth = Dimensions.get('window').width;
+  const [stats, setStats] = useState({
+    totalDays: 0,
+    totalSaved: 0,
+    totalNotSmoked: 0,
+    timeRegained: 0,
+  });
+
+  const { theme } = useTheme();
+  const MINUTES_PER_CIGARETTE = 10;
 
   useEffect(() => {
-    loadDailyLogs();
+    loadStats();
   }, []);
 
-  const loadDailyLogs = async () => {
-    const logs = await storage.getDailyLogs();
-    setDailyLogs(logs);
+  const loadStats = async () => {
+    const quitDate = await storage.getQuitDate();
+    const profile = await storage.getUserProfile();
+
+    if (quitDate && profile) {
+      const now = new Date();
+      const diffTime = Math.abs(now.getTime() - quitDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      setStats({
+        totalDays: diffDays,
+        totalSaved: diffDays * (profile.cigarettesPerDay / profile.cigarettesPerPack) * profile.pricePerPack,
+        totalNotSmoked: diffDays * profile.cigarettesPerDay,
+        timeRegained: (diffDays * profile.cigarettesPerDay * MINUTES_PER_CIGARETTE) / 60,
+      });
+    }
   };
 
-  const getLast7DaysData = () => {
-    const days = Array.from({ length: 7 }, (_, i) => {
-      const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
-      const log = dailyLogs.find(l => l.date === date);
-      return {
-        date: format(subDays(new Date(), i), 'd MMM', { locale: tr }),
-        cravings: log?.cravings || 0,
-        mood: log?.mood || 0
-      };
-    }).reverse();
+  const StatItem = ({ title, value, unit }: { title: string; value: number; unit: string }) => (
+    <View style={[styles.statCard, { 
+      backgroundColor: theme.card,
+      borderColor: theme.cardBorder,
+    }]}>
+      <Text style={[styles.statValue, { color: theme.text }]}>{value.toFixed(1)} {unit}</Text>
+      <Text style={[styles.statTitle, { color: theme.textSecondary }]}>{title}</Text>
+    </View>
+  );
 
-    return {
-      labels: days.map(d => d.date),
-      cravings: days.map(d => d.cravings),
-      moods: days.map(d => d.mood)
-    };
-  };
+  const HealthBenefitCard = ({ benefit }: { benefit: HealthBenefit }) => (
+    <View style={[styles.healthCard, {
+      backgroundColor: theme.card,
+      borderColor: theme.cardBorder,
+    }]}>
+      <View style={styles.healthCardInner}>
+        <View style={[styles.iconContainer, { backgroundColor: theme.primary + '20' }]}>
+          <Ionicons name={benefit.icon as any} size={24} color={theme.primary} />
+        </View>
+        <View style={styles.benefitContent}>
+          <Text style={[styles.benefitTitle, { color: theme.text }]} numberOfLines={1}>
+            {benefit.title}
+          </Text>
+          <Text style={[styles.benefitTime, { color: theme.primary }]} numberOfLines={1}>
+            {benefit.time}
+          </Text>
+          <Text style={[styles.benefitDescription, { color: theme.textSecondary }]} numberOfLines={2}>
+            {benefit.description}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
 
-  const data = getLast7DaysData();
-
-  const chartConfig = {
-    backgroundColor: '#ffffff',
-    backgroundGradientFrom: '#ffffff',
-    backgroundGradientTo: '#ffffff',
-    decimalPlaces: 0,
-    color: (opacity = 1) => `rgba(44, 62, 80, ${opacity})`,
-    style: {
-      borderRadius: 16,
-    },
+  const renderHealthBenefits = () => {
+    const rows = [];
+    for (let i = 0; i < healthBenefits.length; i += 2) {
+      rows.push(
+        <View key={i} style={styles.healthCardRow}>
+          <View style={styles.healthCardColumn}>
+            <HealthBenefitCard benefit={healthBenefits[i]} />
+          </View>
+          {healthBenefits[i + 1] && (
+            <View style={styles.healthCardColumn}>
+              <HealthBenefitCard benefit={healthBenefits[i + 1]} />
+            </View>
+          )}
+        </View>
+      );
+    }
+    return rows;
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Günlük Sigara İsteği</Text>
-        <LineChart
-          data={{
-            labels: data.labels,
-            datasets: [{
-              data: data.cravings
-            }]
-          }}
-          width={screenWidth - 40}
-          height={220}
-          chartConfig={chartConfig}
-          bezier
-          style={styles.chart}
-          yAxisLabel=""
-          yAxisSuffix=" kez"
-        />
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Ruh Hali Değişimi</Text>
-        <BarChart
-          data={{
-            labels: data.labels,
-            datasets: [{
-              data: data.moods
-            }]
-          }}
-          width={screenWidth - 40}
-          height={220}
-          chartConfig={{
-            ...chartConfig,
-            color: (opacity = 1) => `rgba(46, 204, 113, ${opacity})`
-          }}
-          style={styles.chart}
-          yAxisLabel=""
-          yAxisSuffix="/5"
-          showValuesOnTopOfBars
-        />
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: theme.text }]}>İstatistikler</Text>
+        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+          Sigarasız geçen {stats.totalDays} gün boyunca elde ettiğiniz kazanımlar
+        </Text>
       </View>
 
       <View style={styles.statsContainer}>
-        <View style={styles.statCard}>
-          <Text style={styles.statTitle}>Ortalama Günlük İstek</Text>
-          <Text style={styles.statValue}>
-            {(data.cravings.reduce((a, b) => a + b, 0) / 7).toFixed(1)}
-          </Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statTitle}>Ortalama Ruh Hali</Text>
-          <Text style={styles.statValue}>
-            {(data.moods.reduce((a, b) => a + b, 0) / 7).toFixed(1)}/5
-          </Text>
+        <StatItem
+          title="Biriken Para"
+          value={stats.totalSaved}
+          unit="TL"
+        />
+        <StatItem
+          title="İçilmeyen Sigara"
+          value={stats.totalNotSmoked}
+          unit="adet"
+        />
+        <StatItem
+          title="Kazanılan Zaman"
+          value={stats.timeRegained}
+          unit="saat"
+        />
+        <StatItem
+          title="Sigarasız Günler"
+          value={stats.totalDays}
+          unit="gün"
+        />
+      </View>
+
+      <View style={[styles.healthSection, { backgroundColor: theme.background }]}>
+        <Text style={[styles.healthTitle, { color: theme.text }]}>Sağlık Kazanımları</Text>
+        <Text style={[styles.healthSubtitle, { color: theme.textSecondary }]}>
+          Sigarayı bıraktıktan sonra vücudunuzda gerçekleşen olumlu değişimler
+        </Text>
+        <View style={styles.healthCardsContainer}>
+          {renderHealthBenefits()}
         </View>
       </View>
     </ScrollView>
@@ -113,48 +196,114 @@ export const StatsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+  },
+  header: {
     padding: 20,
+    alignItems: 'center',
   },
-  section: {
-    marginBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 18,
+  title: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#2C3E50',
-    marginBottom: 15,
+    marginBottom: 8,
   },
-  chart: {
-    borderRadius: 16,
-    marginVertical: 8,
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
   },
   statsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    padding: 10,
   },
   statCard: {
-    backgroundColor: '#f5f6fa',
-    borderRadius: 15,
+    width: '45%',
     padding: 15,
-    width: '47%',
+    marginBottom: 20,
+    borderRadius: 15,
     alignItems: 'center',
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+    borderWidth: 1,
   },
   statTitle: {
     fontSize: 14,
-    color: '#7F8C8D',
+    marginTop: 8,
     textAlign: 'center',
-    marginBottom: 8,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#2C3E50',
+  },
+  healthSection: {
+    padding: 20,
+  },
+  healthTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  healthSubtitle: {
+    fontSize: 14,
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  healthCardsContainer: {
+    gap: 15,
+  },
+  healthCardRow: {
+    flexDirection: 'row',
+    gap: 15,
+    paddingHorizontal: 2,
+  },
+  healthCardColumn: {
+    flex: 1,
+  },
+  healthCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    height: 180,
+    padding: 15,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  healthCardInner: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  benefitContent: {
+    width: '100%',
+    alignItems: 'center',
+    gap: 4,
+  },
+  benefitTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  benefitTime: {
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  benefitDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
   },
 });

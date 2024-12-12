@@ -1,24 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TextInput, 
-  TouchableOpacity,
-  Alert
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { storage, UserProfile } from '../services/storage';
+import { storage } from '../services/storage';
+import { useTheme } from '../context/ThemeContext';
 
 export const ProfileScreen = () => {
-  const [profile, setProfile] = useState<UserProfile>({
-    cigarettesPerDay: 20,
-    pricePerPack: 30,
+  const [profile, setProfile] = useState({
+    name: '',
+    cigarettesPerDay: 0,
+    pricePerPack: 0,
     cigarettesPerPack: 20,
-    goals: []
+    smokingYears: 0,
   });
-  const [newGoal, setNewGoal] = useState('');
+
+  const { theme } = useTheme();
 
   useEffect(() => {
     loadProfile();
@@ -31,92 +26,64 @@ export const ProfileScreen = () => {
     }
   };
 
-  const handleSaveProfile = async () => {
-    await storage.saveUserProfile(profile);
-    Alert.alert('Başarılı', 'Profil bilgileriniz kaydedildi.');
-  };
-
-  const handleAddGoal = () => {
-    if (newGoal.trim()) {
-      const updatedProfile = {
-        ...profile,
-        goals: [...profile.goals, newGoal.trim()]
-      };
-      setProfile(updatedProfile);
-      setNewGoal('');
-      storage.saveUserProfile(updatedProfile);
-    }
-  };
-
-  const handleRemoveGoal = (index: number) => {
-    const updatedProfile = {
-      ...profile,
-      goals: profile.goals.filter((_, i) => i !== index)
-    };
-    setProfile(updatedProfile);
-    storage.saveUserProfile(updatedProfile);
-  };
+  const InfoItem = ({ icon, label, value }: { icon: string; label: string; value: string | number }) => (
+    <View style={[styles.infoItem, { borderBottomColor: theme.cardBorder }]}>
+      <View style={styles.infoItemLeft}>
+        <Ionicons name={icon as any} size={24} color={theme.text} />
+        <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>{label}</Text>
+      </View>
+      <Text style={[styles.infoValue, { color: theme.text }]}>{value}</Text>
+    </View>
+  );
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Sigara Kullanım Bilgileri</Text>
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Günlük içilen sigara</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={profile.cigarettesPerDay.toString()}
-            onChangeText={(text) => setProfile({
-              ...profile,
-              cigarettesPerDay: parseInt(text) || 0
-            })}
-          />
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.header, { backgroundColor: theme.primary }]}>
+        <View style={styles.avatarContainer}>
+          <Ionicons name="person-circle" size={80} color="#fff" />
         </View>
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Paket fiyatı (TL)</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={profile.pricePerPack.toString()}
-            onChangeText={(text) => setProfile({
-              ...profile,
-              pricePerPack: parseInt(text) || 0
-            })}
-          />
-        </View>
+        <Text style={styles.name}>{profile.name}</Text>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Hedeflerim</Text>
-        <View style={styles.goalsInputContainer}>
-          <TextInput
-            style={styles.goalInput}
-            placeholder="Yeni hedef ekle"
-            value={newGoal}
-            onChangeText={setNewGoal}
-          />
-          <TouchableOpacity style={styles.addButton} onPress={handleAddGoal}>
-            <Ionicons name="add" size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
-        
-        {profile.goals.map((goal, index) => (
-          <View key={index} style={styles.goalItem}>
-            <Text style={styles.goalText}>{goal}</Text>
-            <TouchableOpacity 
-              onPress={() => handleRemoveGoal(index)}
-              style={styles.removeButton}
-            >
-              <Ionicons name="close-circle" size={24} color="#e74c3c" />
-            </TouchableOpacity>
-          </View>
-        ))}
+      <View style={[styles.infoCard, { 
+        backgroundColor: theme.card,
+        borderColor: theme.cardBorder,
+      }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Sigara Kullanım Bilgileri</Text>
+        <InfoItem
+          icon="calendar-outline"
+          label="Kaç Yıldır"
+          value={`${profile.smokingYears} yıl`}
+        />
+        <InfoItem
+          icon="flame-outline"
+          label="Günlük Kullanım"
+          value={`${profile.cigarettesPerDay} adet`}
+        />
+        <InfoItem
+          icon="cash-outline"
+          label="Paket Fiyatı"
+          value={`${profile.pricePerPack} TL`}
+        />
+        <InfoItem
+          icon="calculator-outline"
+          label="Paket Başına"
+          value={`${profile.cigarettesPerPack} adet`}
+        />
       </View>
 
-      <TouchableOpacity style={styles.saveButton} onPress={handleSaveProfile}>
-        <Text style={styles.saveButtonText}>Değişiklikleri Kaydet</Text>
-      </TouchableOpacity>
+      <View style={[styles.infoCard, { 
+        backgroundColor: theme.card,
+        borderColor: theme.cardBorder,
+      }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Hedefler</Text>
+        <View style={styles.goalContainer}>
+          <Ionicons name="trophy" size={40} color="#FFD700" />
+          <Text style={[styles.goalText, { color: theme.text }]}>
+            Hedeflerinizi belirleyerek motivasyonunuzu artırın!
+          </Text>
+        </View>
+      </View>
     </ScrollView>
   );
 };
@@ -124,80 +91,70 @@ export const ProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    padding: 20,
   },
-  section: {
-    marginBottom: 30,
+  header: {
+    alignItems: 'center',
+    padding: 30,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2C3E50',
-    marginBottom: 15,
-  },
-  inputContainer: {
-    marginBottom: 15,
-  },
-  label: {
-    fontSize: 16,
-    color: '#7F8C8D',
-    marginBottom: 5,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#BDC3C7',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
-  },
-  goalsInputContainer: {
-    flexDirection: 'row',
-    marginBottom: 15,
-  },
-  goalInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#BDC3C7',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
-    marginRight: 10,
-  },
-  addButton: {
-    backgroundColor: '#2C3E50',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  avatarContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-  },
-  goalItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f5f6fa',
-    padding: 15,
-    borderRadius: 8,
     marginBottom: 10,
   },
-  goalText: {
-    flex: 1,
-    fontSize: 16,
-    color: '#2C3E50',
-  },
-  removeButton: {
-    padding: 5,
-  },
-  saveButton: {
-    backgroundColor: '#2C3E50',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
+  name: {
+    fontSize: 24,
     fontWeight: 'bold',
+    color: '#fff',
+  },
+  infoCard: {
+    margin: 20,
+    padding: 20,
+    borderRadius: 15,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    borderWidth: 1,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  infoItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  infoLabel: {
+    fontSize: 16,
+    marginLeft: 12,
+  },
+  infoValue: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  goalContainer: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  goalText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 10,
+    lineHeight: 24,
   },
 });

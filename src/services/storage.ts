@@ -4,12 +4,15 @@ const STORAGE_KEYS = {
   QUIT_DATE: '@smokeless_quit_date',
   USER_PROFILE: '@smokeless_user_profile',
   DAILY_LOGS: '@smokeless_daily_logs',
+  ONBOARDING_COMPLETED: '@smokeless_onboarding_completed',
 };
 
 export interface UserProfile {
+  name: string;
   cigarettesPerDay: number;
   pricePerPack: number;
   cigarettesPerPack: number;
+  smokingYears: number;
   goals: string[];
 }
 
@@ -75,6 +78,33 @@ export const storage = {
     } catch (error) {
       console.error('Error getting daily logs:', error);
       return [];
+    }
+  },
+
+  async setOnboardingCompleted(completed: boolean) {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETED, JSON.stringify(completed));
+    } catch (error) {
+      console.error('Error saving onboarding status:', error);
+    }
+  },
+
+  async isOnboardingCompleted(): Promise<boolean> {
+    try {
+      const completed = await AsyncStorage.getItem(STORAGE_KEYS.ONBOARDING_COMPLETED);
+      return completed ? JSON.parse(completed) : false;
+    } catch (error) {
+      console.error('Error getting onboarding status:', error);
+      return false;
+    }
+  },
+
+  async resetAllData() {
+    try {
+      const keys = Object.values(STORAGE_KEYS);
+      await AsyncStorage.multiRemove(keys);
+    } catch (error) {
+      console.error('Error resetting data:', error);
     }
   },
 };
