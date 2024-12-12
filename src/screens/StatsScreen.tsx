@@ -3,64 +3,72 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { storage } from '../services/storage';
 import { useTheme } from '../context/ThemeContext';
+import { useTranslation } from '../hooks/useTranslation';
+import type { TranslationPath } from '../hooks/useTranslation';
+
+type BenefitId = '20m' | '8h' | '24h' | '48h' | '72h' | '2w' | '1m' | '3m' | '6m' | '1y';
 
 interface HealthBenefit {
+  id: BenefitId;
   title: string;
-  time: string;
-  description: string;
+  timeInMinutes: number;
   icon: string;
 }
 
 const healthBenefits: HealthBenefit[] = [
   {
+    id: '20m',
     title: 'İlk Adım',
-    time: '20 dakika sonra',
-    description: 'Kan basıncı ve nabız normale döndü',
+    timeInMinutes: 20,
     icon: 'heart-outline'
   },
   {
+    id: '8h',
     title: 'Temiz Kan',
-    time: '8 saat sonra',
-    description: 'Kandaki karbon monoksit seviyesi normale döndü',
+    timeInMinutes: 480,
     icon: 'water-outline'
   },
   {
+    id: '24h',
     title: 'Güçlü Kalp',
-    time: '24 saat sonra',
-    description: 'Kalp krizi riski azalmaya başladı',
+    timeInMinutes: 1440,
     icon: 'fitness-outline'
   },
   {
+    id: '48h',
     title: 'Yeni Duygular',
-    time: '48 saat sonra',
-    description: 'Tat ve koku duyuları gelişmeye başladı',
+    timeInMinutes: 2880,
     icon: 'restaurant-outline'
   },
   {
+    id: '72h',
     title: 'Temiz Nefes',
-    time: '72 saat sonra',
-    description: 'Nefes alma kolaylaştı',
+    timeInMinutes: 4320,
     icon: 'leaf-outline'
   },
   {
+    id: '2w',
     title: 'Rahat Akciğer',
-    time: '1-9 ay sonra',
-    description: 'Öksürük ve nefes darlığı azaldı',
+    timeInMinutes: 20160,
     icon: 'medkit-outline'
   },
   {
+    id: '1m',
     title: 'Sağlıklı Yaşam',
-    time: '1 yıl sonra',
-    description: 'Kalp krizi riski yarıya indi',
+    timeInMinutes: 43200,
     icon: 'pulse-outline'
   },
   {
+    id: '3m',
     title: 'Yeni Ben',
-    time: '5 yıl sonra',
-    description: 'Akciğer kanseri riski yarıya indi',
+    timeInMinutes: 129600,
     icon: 'shield-checkmark-outline'
   }
 ];
+
+const getBenefitTranslationKey = (id: BenefitId, key: 'title' | 'description'): TranslationPath => {
+  return `stats.benefits.${id}.${key}` as TranslationPath;
+};
 
 export const StatsScreen = () => {
   const [stats, setStats] = useState({
@@ -72,7 +80,9 @@ export const StatsScreen = () => {
   const [quitDate, setQuitDate] = useState<Date | null>(null);
 
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const MINUTES_PER_CIGARETTE = 10;
+  const SUCCESS_COLOR = '#4CAF50';
 
   useEffect(() => {
     loadStats();
@@ -112,40 +122,29 @@ export const StatsScreen = () => {
 
   const HealthBenefitCard = ({ benefit }: { benefit: HealthBenefit }) => {
     const [isAchieved, setIsAchieved] = useState(false);
-    const SUCCESS_COLOR = '#4CAF50'; // Başarı yeşili
 
     useEffect(() => {
       if (quitDate) {
         const now = new Date();
         const diffMinutes = Math.floor((now.getTime() - quitDate.getTime()) / (1000 * 60));
         
-        // Zamanı dakikaya çevir
-        const timeValue = benefit.time.split(' ')[0];
-        const timeUnit = benefit.time.split(' ')[1];
-        let targetMinutes = parseInt(timeValue);
-        
-        // Birimi dakikaya çevir
-        switch (timeUnit) {
-          case 'saat':
-            targetMinutes *= 60;
-            break;
-          case 'gün':
-            targetMinutes *= 24 * 60;
-            break;
-          case 'hafta':
-            targetMinutes *= 7 * 24 * 60;
-            break;
-          case 'ay':
-            targetMinutes *= 30 * 24 * 60;
-            break;
-          case 'yıl':
-            targetMinutes *= 365 * 24 * 60;
-            break;
-        }
-
-        setIsAchieved(diffMinutes >= targetMinutes);
+        setIsAchieved(diffMinutes >= benefit.timeInMinutes);
       }
-    }, [quitDate, benefit.time]);
+    }, [quitDate, benefit.timeInMinutes]);
+
+    const formatTimeRemaining = (minutes: number): string => {
+      const days = Math.floor(minutes / 1440);
+      const hours = Math.floor((minutes % 1440) / 60);
+      const mins = Math.floor(minutes % 60);
+
+      if (days > 0) {
+        return `${days} ${t('stats.time.days')} ${hours} ${t('stats.time.hours')}`;
+      } else if (hours > 0) {
+        return `${hours} ${t('stats.time.hours')} ${mins} ${t('stats.time.minutes')}`;
+      } else {
+        return `${mins} ${t('stats.time.minutes')}`;
+      }
+    };
 
     return (
       <View style={[styles.healthCard, {
@@ -160,7 +159,10 @@ export const StatsScreen = () => {
           </View>
           <View style={styles.benefitContent}>
             <Text style={[styles.benefitTitle, { color: theme.text }]} numberOfLines={1}>
-              {benefit.title}
+              {t(getBenefitTranslationKey(benefit.id, 'title'))}
+            </Text>
+            <Text style={[styles.benefitDescription, { color: theme.textSecondary }]} numberOfLines={2}>
+              {t(getBenefitTranslationKey(benefit.id, 'description'))}
             </Text>
             {isAchieved ? (
               <Text style={[styles.benefitTime, { color: SUCCESS_COLOR }]} numberOfLines={1}>
@@ -168,12 +170,9 @@ export const StatsScreen = () => {
               </Text>
             ) : (
               <Text style={[styles.benefitTime, { color: theme.primary }]} numberOfLines={1}>
-                {benefit.time}
+                {formatTimeRemaining(benefit.timeInMinutes)}
               </Text>
             )}
-            <Text style={[styles.benefitDescription, { color: theme.textSecondary }]} numberOfLines={2}>
-              {benefit.description}
-            </Text>
           </View>
         </View>
       </View>
@@ -202,39 +201,39 @@ export const StatsScreen = () => {
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.text }]}>İstatistikler</Text>
+        <Text style={[styles.title, { color: theme.text }]}>{t('stats.title')}</Text>
         <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-          Sigarasız geçen {stats.daysSince} gün boyunca elde ettiğiniz kazanımlar
+          {t('stats.subtitle')}
         </Text>
       </View>
 
       <View style={styles.statsContainer}>
         <StatItem
-          title="Biriken Para"
+          title={t('stats.moneySaved')}
           value={stats.moneySaved}
           unit="TL"
         />
         <StatItem
-          title="İçilmeyen Sigara"
+          title={t('stats.cigarettesNotSmoked')}
           value={stats.cigarettesNotSmoked}
           unit="adet"
         />
         <StatItem
-          title="Kazanılan Zaman"
+          title={t('stats.timeRegained')}
           value={stats.timeRegained}
           unit="saat"
         />
         <StatItem
-          title="Sigarasız Günler"
+          title={t('stats.daysSince')}
           value={stats.daysSince}
           unit="gün"
         />
       </View>
 
       <View style={[styles.healthSection, { backgroundColor: theme.background }]}>
-        <Text style={[styles.healthTitle, { color: theme.text }]}>Sağlık Kazanımları</Text>
+        <Text style={[styles.healthTitle, { color: theme.text }]}>{t('stats.benefits.title')}</Text>
         <Text style={[styles.healthSubtitle, { color: theme.textSecondary }]}>
-          Sigarayı bıraktıktan sonra vücudunuzda gerçekleşen olumlu değişimler
+          {t('stats.benefits.subtitle')}
         </Text>
         <View style={styles.healthCardsContainer}>
           {renderHealthBenefits()}

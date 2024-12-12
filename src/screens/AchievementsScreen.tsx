@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Animated, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
-import { storage } from '../services/storage';
+import { useTranslation } from '../hooks/useTranslation';
 import * as Haptics from 'expo-haptics';
+import { storage } from '../services/storage';
 
 interface Achievement {
   id: string;
@@ -19,6 +20,7 @@ interface Achievement {
 
 export const AchievementsScreen = () => {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [stats, setStats] = useState({
     moneySaved: 0,
@@ -32,8 +34,8 @@ export const AchievementsScreen = () => {
     // Para Biriktirme Başarımları
     {
       id: 'money_1',
-      title: 'İlk Birikim',
-      description: '100₺ biriktirdin! Harika bir başlangıç!',
+      title: t('achievements.money_1.title'),
+      description: t('achievements.money_1.description'),
       icon: 'wallet-outline',
       target: 100,
       unit: '₺',
@@ -43,8 +45,8 @@ export const AchievementsScreen = () => {
     },
     {
       id: 'money_2',
-      title: 'Küçük Hazine',
-      description: '500₺ biriktirdin! Birikim ustası oluyorsun!',
+      title: t('achievements.money_2.title'),
+      description: t('achievements.money_2.description'),
       icon: 'cash-outline',
       target: 500,
       unit: '₺',
@@ -54,8 +56,8 @@ export const AchievementsScreen = () => {
     },
     {
       id: 'money_3',
-      title: 'Para Bankası',
-      description: '1000₺ biriktirdin! Muhteşem bir başarı!',
+      title: t('achievements.money_3.title'),
+      description: t('achievements.money_3.description'),
       icon: 'diamond-outline',
       target: 1000,
       unit: '₺',
@@ -65,8 +67,8 @@ export const AchievementsScreen = () => {
     },
     {
       id: 'money_4',
-      title: 'Altın Kumbara',
-      description: '2500₺ biriktirdin! Tasarruf uzmanı oldun!',
+      title: t('achievements.money_4.title'),
+      description: t('achievements.money_4.description'),
       icon: 'gift-outline',
       target: 2500,
       unit: '₺',
@@ -76,8 +78,8 @@ export const AchievementsScreen = () => {
     },
     {
       id: 'money_5',
-      title: 'Servet Avcısı',
-      description: '5000₺ biriktirdin! İnanılmaz bir başarı!',
+      title: t('achievements.money_5.title'),
+      description: t('achievements.money_5.description'),
       icon: 'briefcase-outline',
       target: 5000,
       unit: '₺',
@@ -89,8 +91,8 @@ export const AchievementsScreen = () => {
     // İçilmeyen Sigara Başarımları
     {
       id: 'cigarettes_1',
-      title: 'Temiz Başlangıç',
-      description: '50 sigara içmedin! İlk adımı attın!',
+      title: t('achievements.cigarettes_1.title'),
+      description: t('achievements.cigarettes_1.description'),
       icon: 'leaf-outline',
       target: 50,
       unit: '',
@@ -100,8 +102,8 @@ export const AchievementsScreen = () => {
     },
     {
       id: 'cigarettes_2',
-      title: 'Sağlık Yolcusu',
-      description: '100 sigara içmedin! Akciğerlerin teşekkür ediyor!',
+      title: t('achievements.cigarettes_2.title'),
+      description: t('achievements.cigarettes_2.description'),
       icon: 'heart-outline',
       target: 100,
       unit: '',
@@ -111,8 +113,8 @@ export const AchievementsScreen = () => {
     },
     {
       id: 'cigarettes_3',
-      title: 'Nefes Ustası',
-      description: '250 sigara içmedin! Muhteşem gidiyorsun!',
+      title: t('achievements.cigarettes_3.title'),
+      description: t('achievements.cigarettes_3.description'),
       icon: 'fitness-outline',
       target: 250,
       unit: '',
@@ -122,8 +124,8 @@ export const AchievementsScreen = () => {
     },
     {
       id: 'cigarettes_4',
-      title: 'Sağlık Savaşçısı',
-      description: '500 sigara içmedin! İnanılmaz bir irade!',
+      title: t('achievements.cigarettes_4.title'),
+      description: t('achievements.cigarettes_4.description'),
       icon: 'shield-checkmark-outline',
       target: 500,
       unit: '',
@@ -133,8 +135,8 @@ export const AchievementsScreen = () => {
     },
     {
       id: 'cigarettes_5',
-      title: 'Akciğer Kahramanı',
-      description: '1000 sigara içmedin! Efsane oldun!',
+      title: t('achievements.cigarettes_5.title'),
+      description: t('achievements.cigarettes_5.description'),
       icon: 'medal-outline',
       target: 1000,
       unit: '',
@@ -144,8 +146,8 @@ export const AchievementsScreen = () => {
     },
     {
       id: 'cigarettes_6',
-      title: 'Sağlık Efsanesi',
-      description: '2000 sigara içmedin! Sen bir ilham kaynağısın!',
+      title: t('achievements.cigarettes_6.title'),
+      description: t('achievements.cigarettes_6.description'),
       icon: 'ribbon-outline',
       target: 2000,
       unit: '',
@@ -157,8 +159,8 @@ export const AchievementsScreen = () => {
     // Sigarasız Gün Başarımları
     {
       id: 'days_1',
-      title: 'İlk Gün',
-      description: '24 saat sigarasız! Harika bir başlangıç!',
+      title: t('achievements.days_1.title'),
+      description: t('achievements.days_1.description'),
       icon: 'sunny-outline',
       target: 1,
       unit: '',
@@ -168,8 +170,8 @@ export const AchievementsScreen = () => {
     },
     {
       id: 'days_2',
-      title: 'İlk Üç Gün',
-      description: '3 gün sigarasız! En zor kısmı atlattın!',
+      title: t('achievements.days_2.title'),
+      description: t('achievements.days_2.description'),
       icon: 'star-outline',
       target: 3,
       unit: '',
@@ -179,8 +181,8 @@ export const AchievementsScreen = () => {
     },
     {
       id: 'days_3',
-      title: 'İlk Hafta',
-      description: '7 gün sigarasız! Harika gidiyorsun!',
+      title: t('achievements.days_3.title'),
+      description: t('achievements.days_3.description'),
       icon: 'calendar-outline',
       target: 7,
       unit: '',
@@ -190,8 +192,8 @@ export const AchievementsScreen = () => {
     },
     {
       id: 'days_4',
-      title: 'İki Haftalık Zafer',
-      description: '14 gün sigarasız! Muhteşem bir başarı!',
+      title: t('achievements.days_4.title'),
+      description: t('achievements.days_4.description'),
       icon: 'trophy-outline',
       target: 14,
       unit: '',
@@ -201,8 +203,8 @@ export const AchievementsScreen = () => {
     },
     {
       id: 'days_5',
-      title: 'Güçlü Bir Ay',
-      description: '30 gün sigarasız! Bir ayı devirdin!',
+      title: t('achievements.days_5.title'),
+      description: t('achievements.days_5.description'),
       icon: 'moon-outline',
       target: 30,
       unit: '',
@@ -212,8 +214,8 @@ export const AchievementsScreen = () => {
     },
     {
       id: 'days_6',
-      title: 'Çeyrek Yıl',
-      description: '90 gün sigarasız! Artık yeni bir sen var!',
+      title: t('achievements.days_6.title'),
+      description: t('achievements.days_6.description'),
       icon: 'earth-outline',
       target: 90,
       unit: '',
@@ -223,8 +225,8 @@ export const AchievementsScreen = () => {
     },
     {
       id: 'days_7',
-      title: 'Yarım Yıl',
-      description: '180 gün sigarasız! İnanılmaz bir başarı!',
+      title: t('achievements.days_7.title'),
+      description: t('achievements.days_7.description'),
       icon: 'planet-outline',
       target: 180,
       unit: '',
@@ -234,8 +236,8 @@ export const AchievementsScreen = () => {
     },
     {
       id: 'days_8',
-      title: 'Yıldönümü',
-      description: '365 gün sigarasız! Bir yılı devirdin!',
+      title: t('achievements.days_8.title'),
+      description: t('achievements.days_8.description'),
       icon: 'infinite-outline',
       target: 365,
       unit: '',
@@ -381,9 +383,9 @@ export const AchievementsScreen = () => {
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.text }]}>Başarımlar</Text>
+        <Text style={[styles.title, { color: theme.text }]}>{t('achievements.title')}</Text>
         <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-          Sigarasız yaşam yolculuğundaki başarıların
+          {t('achievements.subtitle')}
         </Text>
       </View>
 

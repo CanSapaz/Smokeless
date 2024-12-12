@@ -6,6 +6,8 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { useTheme } from '../context/ThemeContext';
+import { useTranslation } from '../hooks/useTranslation';
+import type { TranslationPath } from '../hooks/useTranslation';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -22,56 +24,65 @@ const motivationalQuotes = [
 ];
 
 // Günlük görevler
-const dailyTasks = [
+type TaskId = 'water' | 'breathing' | 'walk' | 'fruit';
+
+interface Task {
+  id: number;
+  taskType: TaskId;
+  icon: string;
+}
+
+const dailyTasks: Task[] = [
   {
     id: 1,
-    title: "Su İç",
-    description: "8 bardak su içmeyi hedefle",
+    taskType: 'water',
     icon: "water-outline",
   },
   {
     id: 2,
-    title: "Nefes Egzersizi",
-    description: "3 dakika derin nefes al",
+    taskType: 'breathing',
     icon: "leaf-outline",
   },
   {
     id: 3,
-    title: "Kısa Yürüyüş",
-    description: "10 dakika yürüyüş yap",
+    taskType: 'walk',
     icon: "walk-outline",
   },
   {
     id: 4,
-    title: "Meyve Ye",
-    description: "1 porsiyon meyve ye",
+    taskType: 'fruit',
     icon: "nutrition-outline",
   },
 ];
 
 // Başa çıkma teknikleri
-const copingTechniques = [
+type CopingTechniqueId = 'breathing' | 'walking' | 'water' | 'distraction';
+
+interface CopingTechnique {
+  id: CopingTechniqueId;
+  icon: string;
+}
+
+const copingTechniques: CopingTechnique[] = [
   {
-    title: "4-7-8 Nefes Tekniği",
-    description: "4 saniye nefes al, 7 saniye tut, 8 saniye ver",
+    id: 'breathing',
     icon: "fitness-outline",
   },
   {
-    title: "Su İç",
-    description: "Bir bardak su iç ve yavaşça içmeye odaklan",
+    id: 'water',
     icon: "water-outline",
   },
   {
-    title: "Yürüyüş Yap",
-    description: "Kısa bir yürüyüşe çık ve temiz hava al",
+    id: 'walking',
     icon: "walk-outline",
   },
   {
-    title: "Dikkat Dağıt",
-    description: "Sevdiğin bir aktiviteye yönel",
+    id: 'distraction',
     icon: "game-controller-outline",
   },
 ];
+
+type StatKey = 'moneySaved' | 'cigarettesNotSmoked' | 'daysSince' | 'timeRegained';
 
 export const HomeScreen = () => {
   const [quitDate, setQuitDate] = useState<Date | null>(null);
@@ -92,7 +103,36 @@ export const HomeScreen = () => {
 
   const navigation = useNavigation<NavigationProp>();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const MINUTES_PER_CIGARETTE = 10;
+
+  const getCopingTranslationKey = (id: CopingTechniqueId, key: 'title' | 'description'): TranslationPath => {
+    return `home.coping.${id}.${key}` as const;
+  };
+
+  const getTaskTranslationKey = (taskType: TaskId, key: 'title' | 'description'): TranslationPath => {
+    return `home.tasks.${taskType}.${key}` as const;
+  };
+
+  const getStatTranslationKey = (key: StatKey): TranslationPath => {
+    return (`home.stats.${key}`) as const;
+  };
+
+  const getQuotesTranslationKey = (): TranslationPath => {
+    return 'home.quotes' as TranslationPath;
+  };
+
+  const getTasksTitleTranslationKey = (): TranslationPath => {
+    return 'home.tasks.title' as TranslationPath;
+  };
+
+  const getCopingTitleTranslationKey = (): TranslationPath => {
+    return 'home.coping.title' as TranslationPath;
+  };
+
+  const getQuotes = (): string[] => {
+    return t(getQuotesTranslationKey()) as unknown as string[];
+  };
 
   useEffect(() => {
     loadData();
@@ -128,8 +168,9 @@ export const HomeScreen = () => {
   }, [quitDate, profile]);
 
   const setRandomQuote = () => {
-    const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
-    setDailyQuote(motivationalQuotes[randomIndex]);
+    const quotes = getQuotes();
+    const randomIndex = Math.floor(Math.random() * quotes.length);
+    setDailyQuote(quotes[randomIndex]);
   };
 
   const handleStartQuitting = async () => {
@@ -138,7 +179,7 @@ export const HomeScreen = () => {
     await storage.saveQuitDate(date);
   };
 
-  const toggleTaskCompletion = (taskId: number) => {
+  const toggleTask = (taskId: number) => {
     setCompletedTasks(prev =>
       prev.includes(taskId)
         ? prev.filter(id => id !== taskId)
@@ -156,7 +197,7 @@ export const HomeScreen = () => {
     value: number, 
     unit: string,
     decimal?: boolean,
-    title: string
+    title: TranslationPath
   }) => (
     <View style={[styles.statCard, {
       backgroundColor: theme.card,
@@ -164,7 +205,7 @@ export const HomeScreen = () => {
     }]}>
       <View style={styles.statHeader}>
         <Ionicons name={icon as any} size={24} color={theme.primary} />
-        <Text style={[styles.statTitle, { color: theme.textSecondary }]}>{title}</Text>
+        <Text style={[styles.statTitle, { color: theme.textSecondary }]}>{t(title)}</Text>
       </View>
       <View style={styles.statValueContainer}>
         <Text style={[styles.statValue, { color: theme.text }]}>
@@ -174,7 +215,7 @@ export const HomeScreen = () => {
     </View>
   );
 
-  const TaskCard = ({ task }: { task: typeof dailyTasks[0] }) => {
+  const TaskCard = ({ task }: { task: Task }) => {
     const SUCCESS_COLOR = '#4CAF50'; // Başarı yeşili
     const isCompleted = completedTasks.includes(task.id);
 
@@ -184,7 +225,7 @@ export const HomeScreen = () => {
           backgroundColor: theme.card,
           borderColor: isCompleted ? SUCCESS_COLOR : theme.cardBorder,
         }]}
-        onPress={() => toggleTaskCompletion(task.id)}
+        onPress={() => toggleTask(task.id)}
       >
         <View style={styles.taskContent}>
           <View style={[styles.taskIconContainer, { 
@@ -198,10 +239,10 @@ export const HomeScreen = () => {
           </View>
           <View style={styles.taskTextContainer}>
             <Text style={[styles.taskTitle, { color: theme.text }]}>
-              {task.title}
+              {t(getTaskTranslationKey(task.taskType, 'title'))}
             </Text>
             <Text style={[styles.taskDescription, { color: theme.textSecondary }]}>
-              {task.description}
+              {t(getTaskTranslationKey(task.taskType, 'description'))}
             </Text>
           </View>
           {isCompleted ? (
@@ -214,7 +255,7 @@ export const HomeScreen = () => {
     );
   };
 
-  const CopingCard = ({ technique }: { technique: typeof copingTechniques[0] }) => (
+  const CopingCard = ({ technique }: { technique: CopingTechnique }) => (
     <View style={[styles.copingCard, {
       backgroundColor: theme.card,
       borderColor: theme.cardBorder,
@@ -222,9 +263,11 @@ export const HomeScreen = () => {
       <View style={[styles.copingIconContainer, { backgroundColor: theme.primary + '20' }]}>
         <Ionicons name={technique.icon as any} size={24} color={theme.primary} />
       </View>
-      <Text style={[styles.copingTitle, { color: theme.text }]}>{technique.title}</Text>
+      <Text style={[styles.copingTitle, { color: theme.text }]}>
+        {t(getCopingTranslationKey(technique.id, 'title'))}
+      </Text>
       <Text style={[styles.copingDescription, { color: theme.textSecondary }]}>
-        {technique.description}
+        {t(getCopingTranslationKey(technique.id, 'description'))}
       </Text>
     </View>
   );
@@ -233,15 +276,13 @@ export const HomeScreen = () => {
     return (
       <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.welcomeContainer}>
-          <Text style={[styles.title, { color: theme.text }]}>Sigarasız Hayata Hoş Geldiniz!</Text>
-          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-            Yeni bir başlangıç için hazır mısınız?
-          </Text>
+          <Text style={[styles.title, { color: theme.text }]}>{t('home.welcome.title' as const)}</Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{t('home.welcome.subtitle' as const)}</Text>
           <TouchableOpacity
             style={[styles.startButton, { backgroundColor: theme.primary }]}
             onPress={handleStartQuitting}
           >
-            <Text style={styles.startButtonText}>Sigarayı Bırakmaya Başla</Text>
+            <Text style={styles.startButtonText}>{t('home.startQuitting' as const)}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -252,28 +293,28 @@ export const HomeScreen = () => {
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Hoşgeldin ve İstatistikler */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Hoşgeldin!</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('home.welcomeBack' as const)}</Text>
         <View style={styles.statsContainer}>
           <StatCard
             icon="cash-outline"
             value={stats.moneySaved}
             unit="₺"
             decimal={true}
-            title="Birikim"
+            title={getStatTranslationKey('moneySaved')}
           />
           <StatCard
             icon="medical-outline"
             value={stats.cigarettesNotSmoked}
             unit=""
             decimal={false}
-            title="Sigara"
+            title={getStatTranslationKey('cigarettesNotSmoked')}
           />
           <StatCard
             icon="calendar-outline"
             value={stats.daysSince}
             unit=""
             decimal={false}
-            title="Gün"
+            title={getStatTranslationKey('daysSince')}
           />
         </View>
       </View>
@@ -291,7 +332,9 @@ export const HomeScreen = () => {
 
       {/* Günlük Görevler */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Günlük Görevler</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>
+          {t(getTasksTitleTranslationKey())}
+        </Text>
         <View style={styles.tasksContainer}>
           {dailyTasks.map(task => (
             <TaskCard key={task.id} task={task} />
@@ -302,15 +345,15 @@ export const HomeScreen = () => {
       {/* Başa Çıkma Teknikleri */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>
-          Sigara İsteği ile Başa Çıkma Teknikleri
+          {t(getCopingTitleTranslationKey())}
         </Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.copingContainer}
         >
-          {copingTechniques.map((technique, index) => (
-            <CopingCard key={index} technique={technique} />
+          {copingTechniques.map(technique => (
+            <CopingCard key={technique.id} technique={technique} />
           ))}
         </ScrollView>
       </View>

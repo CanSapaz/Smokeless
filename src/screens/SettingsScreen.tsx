@@ -6,6 +6,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { storage } from '../services/storage';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
+import { useTranslation } from '../hooks/useTranslation';
 import * as Updates from 'expo-updates';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -18,6 +20,7 @@ type SettingItemProps = {
   onValueChange?: (value: boolean) => void;
   showArrow?: boolean;
   destructive?: boolean;
+  subtitle?: string;
 };
 
 const SettingItem: React.FC<SettingItemProps> = ({
@@ -28,6 +31,7 @@ const SettingItem: React.FC<SettingItemProps> = ({
   onValueChange,
   showArrow = true,
   destructive = false,
+  subtitle,
 }) => {
   const { theme } = useTheme();
   
@@ -49,6 +53,14 @@ const SettingItem: React.FC<SettingItemProps> = ({
         ]}>
           {title}
         </Text>
+        {subtitle && (
+          <Text style={[
+            styles.settingItemSubtitle,
+            { color: theme.textSecondary }
+          ]}>
+            {subtitle}
+          </Text>
+        )}
       </View>
       {onValueChange && (
         <Switch
@@ -68,19 +80,21 @@ const SettingItem: React.FC<SettingItemProps> = ({
 export const SettingsScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
-  const { isDark, toggleTheme, theme } = useTheme();
+  const { theme, toggleTheme, isDark } = useTheme();
+  const { language, setLanguage } = useLanguage();
+  const { t } = useTranslation();
 
   const handleReset = async () => {
     Alert.alert(
-      "Sigara İçtiniz",
-      "Sigara içtiğinizi belirttiniz. Sıfırlamak ister misiniz?",
+      t('settings.reset.title'),
+      t('settings.reset.message'),
       [
         {
-          text: "İptal",
+          text: t('settings.reset.cancel'),
           style: "cancel"
         },
         {
-          text: "Tekrar Deneyelim",
+          text: t('settings.reset.confirm'),
           style: "destructive",
           onPress: async () => {
             await storage.resetAllData();
@@ -94,20 +108,37 @@ export const SettingsScreen = () => {
     );
   };
 
+  const handleLanguageChange = () => {
+    Alert.alert(
+      t('settings.language.title'),
+      t('settings.language.message'),
+      [
+        {
+          text: "Türkçe",
+          onPress: () => setLanguage('TR')
+        },
+        {
+          text: "English",
+          onPress: () => setLanguage('EN')
+        }
+      ]
+    );
+  };
+
   const checkForUpdates = async () => {
     try {
       const update = await Updates.checkForUpdateAsync();
       if (update.isAvailable) {
         Alert.alert(
-          "Güncelleme Mevcut",
-          "Yeni bir güncelleme mevcut. Şimdi yüklemek ister misiniz?",
+          t('settings.update.title'),
+          t('settings.update.message'),
           [
             {
-              text: "Daha Sonra",
+              text: t('settings.update.cancel'),
               style: "cancel"
             },
             {
-              text: "Güncelle",
+              text: t('settings.update.confirm'),
               onPress: async () => {
                 await Updates.fetchUpdateAsync();
                 await Updates.reloadAsync();
@@ -116,70 +147,77 @@ export const SettingsScreen = () => {
           ]
         );
       } else {
-        Alert.alert("Güncelleme Yok", "En son sürümü kullanıyorsunuz.");
+        Alert.alert(t('settings.update.title'), t('settings.update.notAvailable'));
       }
     } catch (error) {
-      Alert.alert("Hata", "Güncelleme kontrol edilirken bir hata oluştu.");
+      Alert.alert(t('settings.update.error.title'), t('settings.update.error.message'));
     }
   };
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Hesap</Text>
+        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>{t('settings.sections.account')}</Text>
         <SettingItem
           icon="person-outline"
-          title="Profil Bilgileri"
+          title={t('settings.profile')}
           onPress={() => navigation.navigate('Profile')}
         />
       </View>
 
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Genel</Text>
+        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>{t('settings.sections.general')}</Text>
         <SettingItem
           icon="notifications-outline"
-          title="Bildirimler"
+          title={t('settings.notifications')}
           value={notificationsEnabled}
           onValueChange={setNotificationsEnabled}
         />
         <SettingItem
-          icon="moon-outline"
-          title="Karanlık Mod"
+          icon={isDark ? "moon" : "sunny"}
+          title={t('settings.darkMode')}
+          onPress={toggleTheme}
           value={isDark}
           onValueChange={toggleTheme}
+        />
+        <SettingItem
+          icon="language-outline"
+          title={t('settings.language.title')}
+          subtitle={language === 'TR' ? 'Türkçe' : 'English'}
+          onPress={handleLanguageChange}
         />
       </View>
 
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Uygulama</Text>
+        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>{t('settings.sections.about')}</Text>
         <SettingItem
           icon="information-circle-outline"
-          title="Uygulama Hakkında"
-          onPress={() => Alert.alert("Smokeless", "Versiyon 1.0.0")}
+          title={t('settings.about.title')}
+          onPress={() => Alert.alert("Smokeless", `${t('settings.version')} 1.0.0`)}
         />
         <SettingItem
           icon="refresh-outline"
-          title="Güncellemeleri Kontrol Et"
+          title={t('settings.update.title')}
           onPress={checkForUpdates}
         />
         <SettingItem
           icon="mail-outline"
-          title="Geri Bildirim Gönder"
-          onPress={() => Alert.alert("Yakında", "Bu özellik yakında eklenecek")}
+          title={t('settings.feedback.title')}
+          onPress={() => Alert.alert(t('settings.feedback.title'), t('settings.feedback.message'))}
         />
       </View>
 
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Tehlike Bölgesi</Text>
+        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>{t('settings.sections.dangerZone')}</Text>
         <SettingItem
           icon="trash-outline"
-          title="Sigara İçtim"
+          title={t('settings.reset.title')}
           onPress={handleReset}
           destructive
         />
       </View>
 
-      <Text style={[styles.version, { color: theme.textSecondary }]}>Versiyon 1.0.0</Text>
+      <Text style={[styles.version, { color: theme.textSecondary }]}>{t('settings.version')} 1.0.0</Text>
     </ScrollView>
   );
 };
@@ -212,6 +250,11 @@ const styles = StyleSheet.create({
   settingItemText: {
     fontSize: 16,
     marginLeft: 12,
+  },
+  settingItemSubtitle: {
+    fontSize: 14,
+    marginLeft: 12,
+    color: '#666',
   },
   version: {
     textAlign: 'center',
