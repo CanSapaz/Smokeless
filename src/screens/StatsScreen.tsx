@@ -64,11 +64,12 @@ const healthBenefits: HealthBenefit[] = [
 
 export const StatsScreen = () => {
   const [stats, setStats] = useState({
-    totalDays: 0,
-    totalSaved: 0,
-    totalNotSmoked: 0,
+    daysSince: 0,
+    moneySaved: 0,
+    cigarettesNotSmoked: 0,
     timeRegained: 0,
   });
+  const [quitDate, setQuitDate] = useState<Date | null>(null);
 
   const { theme } = useTheme();
   const MINUTES_PER_CIGARETTE = 10;
@@ -78,18 +79,22 @@ export const StatsScreen = () => {
   }, []);
 
   const loadStats = async () => {
-    const quitDate = await storage.getQuitDate();
+    const savedQuitDate = await storage.getQuitDate();
     const profile = await storage.getUserProfile();
+    
+    if (savedQuitDate) {
+      setQuitDate(savedQuitDate);
+    }
 
-    if (quitDate && profile) {
+    if (savedQuitDate && profile) {
       const now = new Date();
-      const diffTime = Math.abs(now.getTime() - quitDate.getTime());
+      const diffTime = Math.abs(now.getTime() - savedQuitDate.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
+      
       setStats({
-        totalDays: diffDays,
-        totalSaved: diffDays * (profile.cigarettesPerDay / profile.cigarettesPerPack) * profile.pricePerPack,
-        totalNotSmoked: diffDays * profile.cigarettesPerDay,
+        daysSince: diffDays,
+        moneySaved: (diffDays * (profile.cigarettesPerDay / profile.cigarettesPerPack) * profile.pricePerPack),
+        cigarettesNotSmoked: diffDays * profile.cigarettesPerDay,
         timeRegained: (diffDays * profile.cigarettesPerDay * MINUTES_PER_CIGARETTE) / 60,
       });
     }
@@ -105,29 +110,75 @@ export const StatsScreen = () => {
     </View>
   );
 
-  const HealthBenefitCard = ({ benefit }: { benefit: HealthBenefit }) => (
-    <View style={[styles.healthCard, {
-      backgroundColor: theme.card,
-      borderColor: theme.cardBorder,
-    }]}>
-      <View style={styles.healthCardInner}>
-        <View style={[styles.iconContainer, { backgroundColor: theme.primary + '20' }]}>
-          <Ionicons name={benefit.icon as any} size={24} color={theme.primary} />
-        </View>
-        <View style={styles.benefitContent}>
-          <Text style={[styles.benefitTitle, { color: theme.text }]} numberOfLines={1}>
-            {benefit.title}
-          </Text>
-          <Text style={[styles.benefitTime, { color: theme.primary }]} numberOfLines={1}>
-            {benefit.time}
-          </Text>
-          <Text style={[styles.benefitDescription, { color: theme.textSecondary }]} numberOfLines={2}>
-            {benefit.description}
-          </Text>
+  const HealthBenefitCard = ({ benefit }: { benefit: HealthBenefit }) => {
+    const [isAchieved, setIsAchieved] = useState(false);
+    const SUCCESS_COLOR = '#4CAF50'; // Başarı yeşili
+
+    useEffect(() => {
+      if (quitDate) {
+        const now = new Date();
+        const diffMinutes = Math.floor((now.getTime() - quitDate.getTime()) / (1000 * 60));
+        
+        // Zamanı dakikaya çevir
+        const timeValue = benefit.time.split(' ')[0];
+        const timeUnit = benefit.time.split(' ')[1];
+        let targetMinutes = parseInt(timeValue);
+        
+        // Birimi dakikaya çevir
+        switch (timeUnit) {
+          case 'saat':
+            targetMinutes *= 60;
+            break;
+          case 'gün':
+            targetMinutes *= 24 * 60;
+            break;
+          case 'hafta':
+            targetMinutes *= 7 * 24 * 60;
+            break;
+          case 'ay':
+            targetMinutes *= 30 * 24 * 60;
+            break;
+          case 'yıl':
+            targetMinutes *= 365 * 24 * 60;
+            break;
+        }
+
+        setIsAchieved(diffMinutes >= targetMinutes);
+      }
+    }, [quitDate, benefit.time]);
+
+    return (
+      <View style={[styles.healthCard, {
+        backgroundColor: theme.card,
+        borderColor: isAchieved ? SUCCESS_COLOR : theme.cardBorder,
+      }]}>
+        <View style={styles.healthCardInner}>
+          <View style={[styles.iconContainer, { 
+            backgroundColor: isAchieved ? SUCCESS_COLOR + '20' : theme.cardBorder + '40'
+          }]}>
+            <Ionicons name={benefit.icon as any} size={24} color={isAchieved ? SUCCESS_COLOR : theme.text} />
+          </View>
+          <View style={styles.benefitContent}>
+            <Text style={[styles.benefitTitle, { color: theme.text }]} numberOfLines={1}>
+              {benefit.title}
+            </Text>
+            {isAchieved ? (
+              <Text style={[styles.benefitTime, { color: SUCCESS_COLOR }]} numberOfLines={1}>
+                <Ionicons name="checkmark" size={20} color={SUCCESS_COLOR} />
+              </Text>
+            ) : (
+              <Text style={[styles.benefitTime, { color: theme.primary }]} numberOfLines={1}>
+                {benefit.time}
+              </Text>
+            )}
+            <Text style={[styles.benefitDescription, { color: theme.textSecondary }]} numberOfLines={2}>
+              {benefit.description}
+            </Text>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   const renderHealthBenefits = () => {
     const rows = [];
@@ -153,19 +204,19 @@ export const StatsScreen = () => {
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.text }]}>İstatistikler</Text>
         <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-          Sigarasız geçen {stats.totalDays} gün boyunca elde ettiğiniz kazanımlar
+          Sigarasız geçen {stats.daysSince} gün boyunca elde ettiğiniz kazanımlar
         </Text>
       </View>
 
       <View style={styles.statsContainer}>
         <StatItem
           title="Biriken Para"
-          value={stats.totalSaved}
+          value={stats.moneySaved}
           unit="TL"
         />
         <StatItem
           title="İçilmeyen Sigara"
-          value={stats.totalNotSmoked}
+          value={stats.cigarettesNotSmoked}
           unit="adet"
         />
         <StatItem
@@ -175,7 +226,7 @@ export const StatsScreen = () => {
         />
         <StatItem
           title="Sigarasız Günler"
-          value={stats.totalDays}
+          value={stats.daysSince}
           unit="gün"
         />
       </View>

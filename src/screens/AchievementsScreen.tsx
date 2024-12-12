@@ -306,6 +306,7 @@ export const AchievementsScreen = () => {
 
   const AchievementCard = ({ achievement }: { achievement: Achievement }) => {
     const progressWidth = new Animated.Value(0);
+    const SUCCESS_COLOR = '#4CAF50'; // Başarı yeşili
 
     useEffect(() => {
       Animated.timing(progressWidth, {
@@ -324,7 +325,7 @@ export const AchievementsScreen = () => {
       <TouchableOpacity
         style={[styles.achievementCard, { 
           backgroundColor: theme.card,
-          borderColor: achievement.unlocked ? theme.primary : theme.cardBorder,
+          borderColor: achievement.unlocked ? SUCCESS_COLOR : theme.cardBorder,
           opacity: achievement.unlocked ? 1 : 0.7,
         }]}
         onPress={() => {
@@ -335,12 +336,12 @@ export const AchievementsScreen = () => {
       >
         <View style={styles.achievementHeader}>
           <View style={[styles.iconContainer, { 
-            backgroundColor: achievement.unlocked ? theme.primary + '20' : theme.textSecondary + '20'
+            backgroundColor: achievement.unlocked ? SUCCESS_COLOR + '20' : theme.textSecondary + '20'
           }]}>
             <Ionicons 
               name={achievement.icon as any} 
               size={24} 
-              color={achievement.unlocked ? theme.primary : theme.textSecondary} 
+              color={achievement.unlocked ? SUCCESS_COLOR : theme.textSecondary} 
             />
           </View>
           <View style={styles.titleContainer}>
@@ -352,7 +353,7 @@ export const AchievementsScreen = () => {
             </Text>
           </View>
           {achievement.unlocked && (
-            <Ionicons name="checkmark-circle" size={24} color={theme.primary} />
+            <Ionicons name="checkmark" size={24} color={SUCCESS_COLOR} />
           )}
         </View>
         
@@ -362,13 +363,15 @@ export const AchievementsScreen = () => {
               styles.progressFill,
               { 
                 width: progressBarWidth,
-                backgroundColor: achievement.unlocked ? theme.primary : theme.textSecondary,
+                backgroundColor: achievement.unlocked ? SUCCESS_COLOR : theme.textSecondary,
               }
             ]} 
           />
         </View>
         
-        <Text style={[styles.progressText, { color: theme.textSecondary }]}>
+        <Text style={[styles.progressText, { 
+          color: achievement.unlocked ? SUCCESS_COLOR : theme.textSecondary 
+        }]}>
           {achievement.progress.toFixed(0)}%
         </Text>
       </TouchableOpacity>

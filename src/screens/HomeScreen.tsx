@@ -174,34 +174,45 @@ export const HomeScreen = () => {
     </View>
   );
 
-  const TaskCard = ({ task }: { task: typeof dailyTasks[0] }) => (
-    <TouchableOpacity
-      style={[styles.taskCard, {
-        backgroundColor: theme.card,
-        borderColor: theme.cardBorder,
-      }]}
-      onPress={() => toggleTaskCompletion(task.id)}
-    >
-      <View style={[styles.taskIconContainer, {
-        backgroundColor: completedTasks.includes(task.id) ? theme.primary + '20' : 'transparent'
-      }]}>
-        <Ionicons
-          name={task.icon as any}
-          size={24}
-          color={completedTasks.includes(task.id) ? theme.primary : theme.text}
-        />
-      </View>
-      <View style={styles.taskContent}>
-        <Text style={[styles.taskTitle, { color: theme.text }]}>{task.title}</Text>
-        <Text style={[styles.taskDescription, { color: theme.textSecondary }]}>
-          {task.description}
-        </Text>
-      </View>
-      {completedTasks.includes(task.id) && (
-        <Ionicons name="checkmark-circle" size={24} color={theme.primary} />
-      )}
-    </TouchableOpacity>
-  );
+  const TaskCard = ({ task }: { task: typeof dailyTasks[0] }) => {
+    const SUCCESS_COLOR = '#4CAF50'; // Başarı yeşili
+    const isCompleted = completedTasks.includes(task.id);
+
+    return (
+      <TouchableOpacity
+        style={[styles.taskCard, {
+          backgroundColor: theme.card,
+          borderColor: isCompleted ? SUCCESS_COLOR : theme.cardBorder,
+        }]}
+        onPress={() => toggleTaskCompletion(task.id)}
+      >
+        <View style={styles.taskContent}>
+          <View style={[styles.taskIconContainer, { 
+            backgroundColor: isCompleted ? SUCCESS_COLOR + '20' : theme.cardBorder + '40'
+          }]}>
+            <Ionicons 
+              name={task.icon as any} 
+              size={24} 
+              color={isCompleted ? SUCCESS_COLOR : theme.text} 
+            />
+          </View>
+          <View style={styles.taskTextContainer}>
+            <Text style={[styles.taskTitle, { color: theme.text }]}>
+              {task.title}
+            </Text>
+            <Text style={[styles.taskDescription, { color: theme.textSecondary }]}>
+              {task.description}
+            </Text>
+          </View>
+          {isCompleted ? (
+            <Ionicons name="checkmark" size={24} color={SUCCESS_COLOR} />
+          ) : (
+            <View style={[styles.checkbox, { borderColor: theme.textSecondary }]} />
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const CopingCard = ({ technique }: { technique: typeof copingTechniques[0] }) => (
     <View style={[styles.copingCard, {
@@ -414,16 +425,18 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   taskCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
     borderRadius: 12,
     borderWidth: 1,
+    padding: 16,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
+  },
+  taskContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   taskIconContainer: {
     width: 48,
@@ -431,9 +444,9 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
+    marginRight: 12,
   },
-  taskContent: {
+  taskTextContainer: {
     flex: 1,
   },
   taskTitle: {
@@ -443,6 +456,13 @@ const styles = StyleSheet.create({
   },
   taskDescription: {
     fontSize: 14,
+    lineHeight: 18,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderRadius: 12,
   },
   copingContainer: {
     paddingHorizontal: 5,

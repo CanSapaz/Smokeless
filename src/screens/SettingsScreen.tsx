@@ -72,15 +72,15 @@ export const SettingsScreen = () => {
 
   const handleReset = async () => {
     Alert.alert(
-      "Uygulamayı Sıfırla",
-      "Tüm verileriniz silinecek ve başlangıç ekranına yönlendirileceksiniz. Emin misiniz?",
+      "Sigara İçtiniz",
+      "Sigara içtiğinizi belirttiniz. Sıfırlamak ister misiniz?",
       [
         {
           text: "İptal",
           style: "cancel"
         },
         {
-          text: "Sıfırla",
+          text: "Tekrar Deneyelim",
           style: "destructive",
           onPress: async () => {
             await storage.resetAllData();
@@ -155,7 +155,7 @@ export const SettingsScreen = () => {
         <SettingItem
           icon="information-circle-outline"
           title="Uygulama Hakkında"
-          onPress={() => Alert.alert("Smokeless", "Versiyon 1.0.1")}
+          onPress={() => Alert.alert("Smokeless", "Versiyon 1.0.0")}
         />
         <SettingItem
           icon="refresh-outline"
@@ -173,13 +173,13 @@ export const SettingsScreen = () => {
         <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Tehlike Bölgesi</Text>
         <SettingItem
           icon="trash-outline"
-          title="Tüm Verileri Sıfırla"
+          title="Sigara İçtim"
           onPress={handleReset}
           destructive
         />
       </View>
 
-      <Text style={[styles.version, { color: theme.textSecondary }]}>Versiyon 1.0.1</Text>
+      <Text style={[styles.version, { color: theme.textSecondary }]}>Versiyon 1.0.0</Text>
     </ScrollView>
   );
 };
