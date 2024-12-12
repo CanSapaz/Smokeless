@@ -4,10 +4,10 @@
     "slug": "smokeless",
     "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/app-icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/icon.png",
+      "image": "./assets/app-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#2C3E50"
     },
@@ -19,14 +19,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
+        "foregroundImage": "./assets/app-icon.png",
         "backgroundColor": "#2C3E50"
       },
       "package": "com.smokeless.app",
       "versionCode": 2
     },
     "web": {
-      "favicon": "./assets/icon.png"
+      "favicon": "./assets/app-icon.png"
     },
     "updates": {
       "enabled": true,
