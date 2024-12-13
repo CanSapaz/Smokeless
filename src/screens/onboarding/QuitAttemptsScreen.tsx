@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
@@ -11,12 +10,18 @@ import {
 } from 'react-native';
 
 interface Props {
-  onNext: (name: string) => void;
+  onNext: (attempts: string) => void;
   onBack?: () => void;
 }
 
-export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
-  const [name, setName] = useState('');
+export const QuitAttemptsScreen: React.FC<Props> = ({ onNext, onBack }) => {
+  const [selectedAttempts, setSelectedAttempts] = useState<string | null>(null);
+
+  const attemptOptions = [
+    { id: 'never', text: 'Hiç, bu ilk kez' },
+    { id: '1-5', text: '1 ile 5 kez arasında' },
+    { id: 'over5', text: '5 defadan fazla' },
+  ];
 
   return (
     <KeyboardAvoidingView
@@ -26,7 +31,7 @@ export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
       {/* Progress Bar */}
       <View style={styles.progressBarContainer}>
         <View style={styles.progressBar}>
-          <View style={[styles.progress, { width: '8.3%' }]} />
+          <View style={[styles.progress, { width: '91.3%' }]} />
         </View>
       </View>
 
@@ -43,26 +48,42 @@ export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
             style={styles.appIcon}
           />
           <View style={styles.chatBubble}>
-            <Text style={styles.chatText}>Adınız nedir?</Text>
+            <Text style={styles.chatText}>
+              Kaç kez bırakmayı denedin?
+            </Text>
             <View style={styles.bubbleTriangle} />
           </View>
         </View>
-        
-        <TextInput
-          style={styles.input}
-          placeholder="Adınızı girin"
-          placeholderTextColor="#8E95B3"
-          value={name}
-          onChangeText={setName}
-          autoFocus
-        />
+
+        {/* Attempt Options */}
+        <View style={styles.optionsContainer}>
+          {attemptOptions.map((option) => (
+            <TouchableOpacity
+              key={option.id}
+              style={[
+                styles.optionButton,
+                selectedAttempts === option.id && styles.selectedOption,
+              ]}
+              onPress={() => setSelectedAttempts(option.id)}
+            >
+              <Text
+                style={[
+                  styles.optionText,
+                  selectedAttempts === option.id && styles.selectedOptionText,
+                ]}
+              >
+                {option.text}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       <View style={styles.bottomContainer}>
         <TouchableOpacity
-          style={[styles.button, !name.trim() && styles.buttonDisabled]}
-          onPress={() => name.trim() && onNext(name.trim())}
-          disabled={!name.trim()}
+          style={[styles.button, !selectedAttempts && styles.buttonDisabled]}
+          onPress={() => selectedAttempts && onNext(selectedAttempts)}
+          disabled={!selectedAttempts}
         >
           <Text style={styles.buttonText}>Devam</Text>
         </TouchableOpacity>
@@ -141,16 +162,28 @@ const styles = StyleSheet.create({
     borderRightColor: '#586286',
     borderBottomColor: 'transparent',
   },
-  input: {
-    width: '100%',
+  optionsContainer: {
+    marginTop: 20,
+  },
+  optionButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: '#8E95B3',
-    borderRadius: 8,
-    padding: 15,
-    fontSize: 16,
-    marginBottom: 30,
+  },
+  selectedOption: {
+    backgroundColor: '#00D48A',
+    borderColor: '#00D48A',
+  },
+  optionText: {
     color: '#fff',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  selectedOptionText: {
+    fontWeight: 'bold',
   },
   bottomContainer: {
     padding: 20,
@@ -163,7 +196,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   buttonDisabled: {
-    backgroundColor: 'rgba(0, 212, 138, 0.5)',
+    opacity: 0.5,
   },
   buttonText: {
     color: '#fff',

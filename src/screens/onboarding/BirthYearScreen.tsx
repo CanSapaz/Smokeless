@@ -11,12 +11,25 @@ import {
 } from 'react-native';
 
 interface Props {
-  onNext: (name: string) => void;
+  onNext: (year: number) => void;
   onBack?: () => void;
 }
 
-export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
-  const [name, setName] = useState('');
+export const BirthYearScreen: React.FC<Props> = ({ onNext, onBack }) => {
+  const [year, setYear] = useState('');
+
+  const currentYear = new Date().getFullYear();
+
+  const isValidYear = (year: string) => {
+    const yearNum = parseInt(year);
+    return yearNum >= 1900 && yearNum <= currentYear && year.length === 4;
+  };
+
+  const handleSubmit = () => {
+    if (year.trim()) {
+      onNext(parseInt(year));
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -26,7 +39,7 @@ export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
       {/* Progress Bar */}
       <View style={styles.progressBarContainer}>
         <View style={styles.progressBar}>
-          <View style={[styles.progress, { width: '8.3%' }]} />
+          <View style={[styles.progress, { width: '24.9%' }]} />
         </View>
       </View>
 
@@ -38,31 +51,33 @@ export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
       <View style={styles.content}>
         {/* Header with app icon and chat bubble */}
         <View style={styles.header}>
-          <Image 
-            source={require('../../../assets/app-icon.png')} 
+          <Image
+            source={require('../../../assets/app-icon.png')}
             style={styles.appIcon}
           />
           <View style={styles.chatBubble}>
-            <Text style={styles.chatText}>Adınız nedir?</Text>
+            <Text style={styles.chatText}>Doğum yılınız nedir?</Text>
             <View style={styles.bubbleTriangle} />
           </View>
         </View>
-        
+
         <TextInput
           style={styles.input}
-          placeholder="Adınızı girin"
+          placeholder="Doğum yılınızı girin"
           placeholderTextColor="#8E95B3"
-          value={name}
-          onChangeText={setName}
+          value={year}
+          onChangeText={(text) => setYear(text.replace(/[^0-9]/g, ''))}
+          keyboardType="numeric"
+          maxLength={4}
           autoFocus
         />
       </View>
 
       <View style={styles.bottomContainer}>
         <TouchableOpacity
-          style={[styles.button, !name.trim() && styles.buttonDisabled]}
-          onPress={() => name.trim() && onNext(name.trim())}
-          disabled={!name.trim()}
+          style={[styles.button, !isValidYear(year) && styles.buttonDisabled]}
+          onPress={handleSubmit}
+          disabled={!isValidYear(year)}
         >
           <Text style={styles.buttonText}>Devam</Text>
         </TouchableOpacity>

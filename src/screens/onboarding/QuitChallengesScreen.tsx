@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
@@ -11,12 +10,20 @@ import {
 } from 'react-native';
 
 interface Props {
-  onNext: (name: string) => void;
+  onNext: (challenge: string) => void;
   onBack?: () => void;
 }
 
-export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
-  const [name, setName] = useState('');
+export const QuitChallengesScreen: React.FC<Props> = ({ onNext, onBack }) => {
+  const [selectedChallenge, setSelectedChallenge] = useState<string | null>(null);
+
+  const challenges = [
+    { id: 'confidence', text: 'Özgüven eksikliği' },
+    { id: 'negative_events', text: 'Yaşanan olumsuz olaylar' },
+    { id: 'positive_events', text: 'Yaşanan olumlu olaylar' },
+    { id: 'lack_support', text: 'Sevdiklerimin destek eksikliği' },
+    { id: 'social_pressure', text: 'Yeniden sigara içmeye başlamak için sosyal baskı' },
+  ];
 
   return (
     <KeyboardAvoidingView
@@ -26,7 +33,7 @@ export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
       {/* Progress Bar */}
       <View style={styles.progressBarContainer}>
         <View style={styles.progressBar}>
-          <View style={[styles.progress, { width: '8.3%' }]} />
+          <View style={[styles.progress, { width: '99.5%' }]} />
         </View>
       </View>
 
@@ -43,26 +50,42 @@ export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
             style={styles.appIcon}
           />
           <View style={styles.chatBubble}>
-            <Text style={styles.chatText}>Adınız nedir?</Text>
+            <Text style={styles.chatText}>
+              Geçen sefer seni ne zorladı?
+            </Text>
             <View style={styles.bubbleTriangle} />
           </View>
         </View>
-        
-        <TextInput
-          style={styles.input}
-          placeholder="Adınızı girin"
-          placeholderTextColor="#8E95B3"
-          value={name}
-          onChangeText={setName}
-          autoFocus
-        />
+
+        {/* Challenge Options */}
+        <View style={styles.optionsContainer}>
+          {challenges.map((challenge) => (
+            <TouchableOpacity
+              key={challenge.id}
+              style={[
+                styles.optionButton,
+                selectedChallenge === challenge.id && styles.selectedOption,
+              ]}
+              onPress={() => setSelectedChallenge(challenge.id)}
+            >
+              <Text
+                style={[
+                  styles.optionText,
+                  selectedChallenge === challenge.id && styles.selectedOptionText,
+                ]}
+              >
+                {challenge.text}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       <View style={styles.bottomContainer}>
         <TouchableOpacity
-          style={[styles.button, !name.trim() && styles.buttonDisabled]}
-          onPress={() => name.trim() && onNext(name.trim())}
-          disabled={!name.trim()}
+          style={[styles.button, !selectedChallenge && styles.buttonDisabled]}
+          onPress={() => selectedChallenge && onNext(selectedChallenge)}
+          disabled={!selectedChallenge}
         >
           <Text style={styles.buttonText}>Devam</Text>
         </TouchableOpacity>
@@ -141,16 +164,28 @@ const styles = StyleSheet.create({
     borderRightColor: '#586286',
     borderBottomColor: 'transparent',
   },
-  input: {
-    width: '100%',
+  optionsContainer: {
+    marginTop: 20,
+  },
+  optionButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: '#8E95B3',
-    borderRadius: 8,
-    padding: 15,
-    fontSize: 16,
-    marginBottom: 30,
+  },
+  selectedOption: {
+    backgroundColor: '#00D48A',
+    borderColor: '#00D48A',
+  },
+  optionText: {
     color: '#fff',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  selectedOptionText: {
+    fontWeight: 'bold',
   },
   bottomContainer: {
     padding: 20,
@@ -163,7 +198,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   buttonDisabled: {
-    backgroundColor: 'rgba(0, 212, 138, 0.5)',
+    opacity: 0.5,
   },
   buttonText: {
     color: '#fff',

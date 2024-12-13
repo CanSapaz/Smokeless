@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
@@ -11,12 +10,21 @@ import {
 } from 'react-native';
 
 interface Props {
-  onNext: (name: string) => void;
+  onNext: (startAge: string) => void;
   onBack?: () => void;
 }
 
-export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
-  const [name, setName] = useState('');
+export const SmokingStartAgeScreen: React.FC<Props> = ({ onNext, onBack }) => {
+  const [selectedAge, setSelectedAge] = useState<string | null>(null);
+
+  const ageRanges = [
+    { id: 'under18', text: '18 yaş altı' },
+    { id: '18-24', text: '18-24 yaş arası' },
+    { id: '25-34', text: '25-34 yaş arası' },
+    { id: '35-49', text: '35-49 yaş arası' },
+    { id: '50-64', text: '50-64 yaş arası' },
+    { id: 'over65', text: '65 yaş üstü' },
+  ];
 
   return (
     <KeyboardAvoidingView
@@ -26,7 +34,7 @@ export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
       {/* Progress Bar */}
       <View style={styles.progressBarContainer}>
         <View style={styles.progressBar}>
-          <View style={[styles.progress, { width: '8.3%' }]} />
+          <View style={[styles.progress, { width: '83%' }]} />
         </View>
       </View>
 
@@ -43,26 +51,42 @@ export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
             style={styles.appIcon}
           />
           <View style={styles.chatBubble}>
-            <Text style={styles.chatText}>Adınız nedir?</Text>
+            <Text style={styles.chatText}>
+              Sigara içmeye ne zaman başladın?
+            </Text>
             <View style={styles.bubbleTriangle} />
           </View>
         </View>
-        
-        <TextInput
-          style={styles.input}
-          placeholder="Adınızı girin"
-          placeholderTextColor="#8E95B3"
-          value={name}
-          onChangeText={setName}
-          autoFocus
-        />
+
+        {/* Age Range Options */}
+        <View style={styles.optionsContainer}>
+          {ageRanges.map((range) => (
+            <TouchableOpacity
+              key={range.id}
+              style={[
+                styles.optionButton,
+                selectedAge === range.id && styles.selectedOption,
+              ]}
+              onPress={() => setSelectedAge(range.id)}
+            >
+              <Text
+                style={[
+                  styles.optionText,
+                  selectedAge === range.id && styles.selectedOptionText,
+                ]}
+              >
+                {range.text}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       <View style={styles.bottomContainer}>
         <TouchableOpacity
-          style={[styles.button, !name.trim() && styles.buttonDisabled]}
-          onPress={() => name.trim() && onNext(name.trim())}
-          disabled={!name.trim()}
+          style={[styles.button, !selectedAge && styles.buttonDisabled]}
+          onPress={() => selectedAge && onNext(selectedAge)}
+          disabled={!selectedAge}
         >
           <Text style={styles.buttonText}>Devam</Text>
         </TouchableOpacity>
@@ -141,16 +165,28 @@ const styles = StyleSheet.create({
     borderRightColor: '#586286',
     borderBottomColor: 'transparent',
   },
-  input: {
-    width: '100%',
+  optionsContainer: {
+    marginTop: 20,
+  },
+  optionButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: '#8E95B3',
-    borderRadius: 8,
-    padding: 15,
-    fontSize: 16,
-    marginBottom: 30,
+  },
+  selectedOption: {
+    backgroundColor: '#00D48A',
+    borderColor: '#00D48A',
+  },
+  optionText: {
     color: '#fff',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  selectedOptionText: {
+    fontWeight: 'bold',
   },
   bottomContainer: {
     padding: 20,
@@ -163,7 +199,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   buttonDisabled: {
-    backgroundColor: 'rgba(0, 212, 138, 0.5)',
+    opacity: 0.5,
   },
   buttonText: {
     color: '#fff',

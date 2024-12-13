@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
@@ -11,12 +10,19 @@ import {
 } from 'react-native';
 
 interface Props {
-  onNext: (name: string) => void;
+  onNext: (gender: string) => void;
   onBack?: () => void;
 }
 
-export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
-  const [name, setName] = useState('');
+export const GenderScreen: React.FC<Props> = ({ onNext, onBack }) => {
+  const [selectedGender, setSelectedGender] = useState<string>('');
+
+  const genderOptions = [
+    { id: 'female', label: 'Kadın' },
+    { id: 'male', label: 'Erkek' },
+    { id: 'non_binary', label: 'İkilik Dışı' },
+    { id: 'other', label: 'Diğer' },
+  ];
 
   return (
     <KeyboardAvoidingView
@@ -26,7 +32,7 @@ export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
       {/* Progress Bar */}
       <View style={styles.progressBarContainer}>
         <View style={styles.progressBar}>
-          <View style={[styles.progress, { width: '8.3%' }]} />
+          <View style={[styles.progress, { width: '16.6%' }]} />
         </View>
       </View>
 
@@ -43,26 +49,38 @@ export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
             style={styles.appIcon}
           />
           <View style={styles.chatBubble}>
-            <Text style={styles.chatText}>Adınız nedir?</Text>
+            <Text style={styles.chatText}>Kendinizi nasıl tanımlıyorsunuz?</Text>
             <View style={styles.bubbleTriangle} />
           </View>
         </View>
         
-        <TextInput
-          style={styles.input}
-          placeholder="Adınızı girin"
-          placeholderTextColor="#8E95B3"
-          value={name}
-          onChangeText={setName}
-          autoFocus
-        />
+        {/* Gender Options */}
+        <View style={styles.optionsContainer}>
+          {genderOptions.map((option) => (
+            <TouchableOpacity
+              key={option.id}
+              style={[
+                styles.optionButton,
+                selectedGender === option.id && styles.optionButtonSelected,
+              ]}
+              onPress={() => setSelectedGender(option.id)}
+            >
+              <Text style={[
+                styles.optionText,
+                selectedGender === option.id && styles.optionTextSelected,
+              ]}>
+                {option.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       <View style={styles.bottomContainer}>
         <TouchableOpacity
-          style={[styles.button, !name.trim() && styles.buttonDisabled]}
-          onPress={() => name.trim() && onNext(name.trim())}
-          disabled={!name.trim()}
+          style={[styles.button, !selectedGender && styles.buttonDisabled]}
+          onPress={() => selectedGender && onNext(selectedGender)}
+          disabled={!selectedGender}
         >
           <Text style={styles.buttonText}>Devam</Text>
         </TouchableOpacity>
@@ -141,16 +159,27 @@ const styles = StyleSheet.create({
     borderRightColor: '#586286',
     borderBottomColor: 'transparent',
   },
-  input: {
-    width: '100%',
+  optionsContainer: {
+    gap: 12,
+  },
+  optionButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 15,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#8E95B3',
-    borderRadius: 8,
-    padding: 15,
-    fontSize: 16,
-    marginBottom: 30,
+  },
+  optionButtonSelected: {
+    backgroundColor: '#00D48A',
+    borderColor: '#00D48A',
+  },
+  optionText: {
     color: '#fff',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  optionTextSelected: {
+    fontWeight: 'bold',
   },
   bottomContainer: {
     padding: 20,

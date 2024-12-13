@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
@@ -11,12 +10,20 @@ import {
 } from 'react-native';
 
 interface Props {
-  onNext: (name: string) => void;
+  onNext: (choice: string) => void;
   onBack?: () => void;
+  userName?: string;
 }
 
-export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
-  const [name, setName] = useState('');
+export const QuitTimeScreen: React.FC<Props> = ({ onNext, onBack, userName }) => {
+  const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+
+  const choices = [
+    { id: 'now', text: 'Şimdi' },
+    { id: 'soon', text: 'Yakında' },
+    { id: 'already', text: 'Zaten Bıraktım' },
+    { id: 'unknown', text: 'Bilmiyorum' },
+  ];
 
   return (
     <KeyboardAvoidingView
@@ -26,7 +33,7 @@ export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
       {/* Progress Bar */}
       <View style={styles.progressBarContainer}>
         <View style={styles.progressBar}>
-          <View style={[styles.progress, { width: '8.3%' }]} />
+          <View style={[styles.progress, { width: '58.1%' }]} />
         </View>
       </View>
 
@@ -43,26 +50,45 @@ export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
             style={styles.appIcon}
           />
           <View style={styles.chatBubble}>
-            <Text style={styles.chatText}>Adınız nedir?</Text>
+            <Text style={styles.chatText}>
+              Sigarayı ne zaman bırakmak istiyorsun, {userName}?
+            </Text>
             <View style={styles.bubbleTriangle} />
           </View>
         </View>
-        
-        <TextInput
-          style={styles.input}
-          placeholder="Adınızı girin"
-          placeholderTextColor="#8E95B3"
-          value={name}
-          onChangeText={setName}
-          autoFocus
-        />
+
+        {/* Choices */}
+        <View style={styles.choicesContainer}>
+          {choices.map((choice) => (
+            <TouchableOpacity
+              key={choice.id}
+              style={[
+                styles.choiceButton,
+                selectedChoice === choice.id && styles.selectedChoice,
+              ]}
+              onPress={() => setSelectedChoice(choice.id)}
+            >
+              <Text
+                style={[
+                  styles.choiceText,
+                  selectedChoice === choice.id && styles.selectedChoiceText,
+                ]}
+              >
+                {choice.text}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       <View style={styles.bottomContainer}>
         <TouchableOpacity
-          style={[styles.button, !name.trim() && styles.buttonDisabled]}
-          onPress={() => name.trim() && onNext(name.trim())}
-          disabled={!name.trim()}
+          style={[
+            styles.button,
+            !selectedChoice && styles.buttonDisabled,
+          ]}
+          disabled={!selectedChoice}
+          onPress={() => selectedChoice && onNext(selectedChoice)}
         >
           <Text style={styles.buttonText}>Devam</Text>
         </TouchableOpacity>
@@ -141,16 +167,28 @@ const styles = StyleSheet.create({
     borderRightColor: '#586286',
     borderBottomColor: 'transparent',
   },
-  input: {
-    width: '100%',
+  choicesContainer: {
+    marginTop: 20,
+  },
+  choiceButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: '#8E95B3',
-    borderRadius: 8,
-    padding: 15,
-    fontSize: 16,
-    marginBottom: 30,
+  },
+  selectedChoice: {
+    backgroundColor: '#00D48A',
+    borderColor: '#00D48A',
+  },
+  choiceText: {
     color: '#fff',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  selectedChoiceText: {
+    fontWeight: 'bold',
   },
   bottomContainer: {
     padding: 20,
@@ -163,7 +201,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   buttonDisabled: {
-    backgroundColor: 'rgba(0, 212, 138, 0.5)',
+    opacity: 0.5,
   },
   buttonText: {
     color: '#fff',

@@ -3,20 +3,26 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   Image,
+  TextInput,
 } from 'react-native';
 
 interface Props {
-  onNext: (name: string) => void;
+  onNext: (count: string) => void;
   onBack?: () => void;
 }
 
-export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
-  const [name, setName] = useState('');
+export const CigarettesPerPackScreen: React.FC<Props> = ({ onNext, onBack }) => {
+  const [cigaretteCount, setCigaretteCount] = useState('');
+
+  const handleSubmit = () => {
+    if (cigaretteCount.trim()) {
+      onNext(cigaretteCount);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -26,7 +32,7 @@ export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
       {/* Progress Bar */}
       <View style={styles.progressBarContainer}>
         <View style={styles.progressBar}>
-          <View style={[styles.progress, { width: '8.3%' }]} />
+          <View style={[styles.progress, { width: '97.5%' }]} />
         </View>
       </View>
 
@@ -43,26 +49,31 @@ export const NameScreen: React.FC<Props> = ({ onNext, onBack }) => {
             style={styles.appIcon}
           />
           <View style={styles.chatBubble}>
-            <Text style={styles.chatText}>Adınız nedir?</Text>
+            <Text style={styles.chatText}>
+              Bir pakette kaç sigara vardı?
+            </Text>
             <View style={styles.bubbleTriangle} />
           </View>
         </View>
-        
-        <TextInput
-          style={styles.input}
-          placeholder="Adınızı girin"
-          placeholderTextColor="#8E95B3"
-          value={name}
-          onChangeText={setName}
-          autoFocus
-        />
+
+        {/* Input */}
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            value={cigaretteCount}
+            onChangeText={setCigaretteCount}
+            keyboardType="number-pad"
+            placeholder="Sayı girin"
+            placeholderTextColor="#8E95B3"
+          />
+        </View>
       </View>
 
       <View style={styles.bottomContainer}>
         <TouchableOpacity
-          style={[styles.button, !name.trim() && styles.buttonDisabled]}
-          onPress={() => name.trim() && onNext(name.trim())}
-          disabled={!name.trim()}
+          style={[styles.button, !cigaretteCount && styles.buttonDisabled]}
+          onPress={handleSubmit}
+          disabled={!cigaretteCount}
         >
           <Text style={styles.buttonText}>Devam</Text>
         </TouchableOpacity>
@@ -141,16 +152,17 @@ const styles = StyleSheet.create({
     borderRightColor: '#586286',
     borderBottomColor: 'transparent',
   },
+  inputContainer: {
+    marginTop: 20,
+  },
   input: {
-    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderWidth: 1,
     borderColor: '#8E95B3',
     borderRadius: 8,
     padding: 15,
-    fontSize: 16,
-    marginBottom: 30,
     color: '#fff',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    fontSize: 16,
   },
   bottomContainer: {
     padding: 20,
@@ -163,7 +175,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   buttonDisabled: {
-    backgroundColor: 'rgba(0, 212, 138, 0.5)',
+    opacity: 0.5,
   },
   buttonText: {
     color: '#fff',
